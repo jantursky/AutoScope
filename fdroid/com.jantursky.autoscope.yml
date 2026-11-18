@@ -1,0 +1,27 @@
+Categories:
+  - Development
+License: MIT
+AuthorName: Jan Tursky
+AuthorWebSite: https://jantursky.com
+WebSite: https://github.com/jantursky/AutoScope
+SourceCode: https://github.com/jantursky/AutoScope
+IssueTracker: https://github.com/jantursky/AutoScope/issues
+Changelog: https://github.com/jantursky/AutoScope/releases
+
+AutoName: AutoScope
+
+RepoType: git
+Repo: https://github.com/jantursky/AutoScope.git
+
+Builds:
+  - versionName: 1.1.0
+    versionCode: 2
+    commit: v1.1.0
+    subdir: app
+    gradle:
+      - yes
+
+AutoUpdateMode: Version v%v
+UpdateCheckMode: Tags
+CurrentVersion: 1.1.0
+CurrentVersionCode: 2
