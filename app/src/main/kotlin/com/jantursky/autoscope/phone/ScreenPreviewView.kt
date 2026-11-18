@@ -2,6 +2,7 @@ package com.jantursky.autoscope.phone
 
 import android.content.Context
 import android.graphics.Canvas
+import android.graphics.Color
 import android.graphics.DashPathEffect
 import android.graphics.Path
 import android.graphics.Paint
@@ -18,7 +19,7 @@ import kotlin.math.sin
 private const val MAX_HEIGHT_DP = 168
 private const val PLACEHOLDER_RATIO = 16f / 9f
 private const val DIM_ALPHA = 110
-private const val ARROW_ALPHA = 150
+private const val ARROW_ALPHA = 200
 
 /** To-scale drawing of the car display with its usable areas; dimmed with a reason when there is no data. */
 private class ScreenDrawingView(context: Context) : View(context) {
@@ -74,7 +75,8 @@ private class ScreenDrawingView(context: Context) : View(context) {
         val t = rect.top + inset
         val r = rect.right - inset
         val b = rect.bottom - inset
-        stroke.color = context.color(R.color.text_secondary)
+        // White reads on the dark glass in both themes.
+        stroke.color = Color.WHITE
         stroke.alpha = ARROW_ALPHA
         stroke.pathEffect = null
         stroke.strokeWidth = 1.5f * density

@@ -10,8 +10,8 @@ android {
         applicationId = "com.jantursky.autoscope"
         minSdk = 28
         targetSdk = 37
-        versionCode = 1
-        versionName = "1.0.0"
+        versionCode = 2
+        versionName = "1.1.0"
     }
 
     // Release signing comes from the environment, so a plain checkout (and F-Droid, which signs

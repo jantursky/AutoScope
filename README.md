@@ -14,7 +14,7 @@ Built with `./gradlew assembleDebug`, with JVM unit tests for the data layer and
 
 ## Install
 
-Download `AutoScope-1.0.0.apk` from the [latest release](https://github.com/jantursky/AutoScope/releases/latest) and open it on the phone, or run `adb install AutoScope-1.0.0.apk`. Then follow [Setup](#setup) for developer mode and "Unknown sources". F-Droid is planned; the store metadata is in `fastlane/`.
+Download `AutoScope-1.1.0.apk` from the [latest release](https://github.com/jantursky/AutoScope/releases/latest) and open it on the phone, or run `adb install AutoScope-1.1.0.apk`. Then follow [Setup](#setup) for developer mode and "Unknown sources". F-Droid is planned; the store metadata is in `fastlane/`.
 
 ## What is in the car
 

@@ -61,6 +61,9 @@ class MainActivity : Activity() {
     private val scrollPositions = mutableMapOf<String, Int>()
     private var scope: CoroutineScope? = null
 
+    /** `--ez demo true`: shows a fixed fake report for screenshots; nothing live is read, saved or listed. */
+    private val demo by lazy { intent.getBooleanExtra("demo", false) }
+
     override fun attachBaseContext(newBase: Context) {
         super.attachBaseContext(themedContext(newBase, Settings(newBase).themeMode))
     }
@@ -79,6 +82,12 @@ class MainActivity : Activity() {
 
     override fun onStart() {
         super.onStart()
+        if (demo) {
+            show(DemoData.snapshot)
+            carPage.bind(carPageModel(DemoData.telemetry, DemoData.snapshot))
+            showSavedReports()
+            return
+        }
         container.acquireTicker()
         val collector = CoroutineScope(Job() + Dispatchers.Main.immediate)
         scope = collector
@@ -94,14 +103,14 @@ class MainActivity : Activity() {
     override fun onStop() {
         scope?.cancel()
         scope = null
-        container.releaseTicker()
+        if (!demo) container.releaseTicker()
         super.onStop()
     }
 
     private fun buildContent(): View {
         header = HeaderView(this, container.settings) { action ->
             when (action) {
-                MenuAction.Save -> saveSnapshot()
+                MenuAction.Save -> if (!demo) saveSnapshot()
                 MenuAction.Copy -> copyReport()
                 is MenuAction.Interval -> container.settings.refreshMillis = action.millis
                 is MenuAction.Theme -> {
@@ -154,13 +163,15 @@ class MainActivity : Activity() {
 
     private fun show(snapshot: Snapshot) {
         header.bind(connectionPill(snapshot), CLOCK.format(LocalTime.now()))
-        connectionExtras.bind(
+        val timeline = if (demo) {
+            DemoData.timeline()
+        } else {
             connectionTimeline(
                 CarConnectionMonitor.shared(this).tracker.history(),
                 SystemClock.elapsedRealtime(), System.currentTimeMillis(), ZoneId.systemDefault(),
-            ),
-            wifiQuality(snapshot),
-        )
+            )
+        }
+        connectionExtras.bind(timeline, wifiQuality(snapshot))
         screenView.bind(screenPreview(snapshot))
         models = groupModels(snapshot)
         tabs = tabModels(models)
@@ -205,7 +216,7 @@ class MainActivity : Activity() {
     }
 
     private fun copyReport() {
-        val text = ReportFormat.text(container.repository.snapshot.value, System.currentTimeMillis(), "Copied from the phone")
+        val text = ReportFormat.text(if (demo) DemoData.snapshot else container.repository.snapshot.value, System.currentTimeMillis(), "Copied from the phone")
         getSystemService(ClipboardManager::class.java).setPrimaryClip(ClipData.newPlainText(getString(R.string.live_report), text))
         Toast.makeText(this, R.string.report_copied, Toast.LENGTH_SHORT).show()
     }
@@ -231,7 +242,7 @@ class MainActivity : Activity() {
     }
 
     private fun showSavedReports() {
-        val reports = container.reports.list()
+        val reports = if (demo) emptyList() else container.reports.list()
         showChanges(reports)
         reportsPage.bind(reports)
     }

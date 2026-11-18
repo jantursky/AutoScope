@@ -1,0 +1,1 @@
+Media entry point for real cars, "Media only" verdict, demo data for screenshots.
