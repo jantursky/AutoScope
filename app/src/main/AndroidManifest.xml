@@ -33,7 +33,7 @@
         android:allowBackup="false"
         android:supportsRtl="true">
 
-        <!-- Declares the app as a template app for Android Auto. -->
+        <!-- Declares the app as a template and a media app for Android Auto (res/xml/automotive_app_desc.xml). -->
         <meta-data
             android:name="com.google.android.gms.car.application"
             android:resource="@xml/automotive_app_desc" />
@@ -50,6 +50,16 @@
                 <action android:name="androidx.car.app.CarAppService" />
                 <!-- POI category (CarAppService.CATEGORY_POI_APP). IOT is experimental, see KNOWN_LIMITATIONS.md. -->
                 <category android:name="androidx.car.app.category.POI" />
+            </intent-filter>
+        </service>
+
+        <!-- Media entry point: a real Android Auto host launches sideloaded media apps ("Unknown sources")
+             but denies sideloaded Car App Library apps (CAR.VALIDATOR "failed all other checks"). -->
+        <service
+            android:name=".media.AutoScopeMediaService"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.media.browse.MediaBrowserService" />
             </intent-filter>
         </service>
 

@@ -32,6 +32,11 @@ android {
         }
     }
 
+    lint {
+        // Voice search is a Play requirement for media apps. This one never plays anything and is not on Play.
+        disable += setOf("MissingIntentFilterForMediaSearch", "MissingOnPlayFromSearch")
+    }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
@@ -49,6 +54,8 @@ dependencies {
     implementation(libs.kotlinx.coroutines.android)
     // CarHardwareManager on Android Auto lives in app-projected (androidx.car.app docs, "Car Hardware APIs").
     implementation(libs.androidx.car.app.projected)
+    // MediaBrowserServiceCompat: the media entry point for hosts that refuse sideloaded Car App Library apps.
+    implementation(libs.androidx.media)
 
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)
