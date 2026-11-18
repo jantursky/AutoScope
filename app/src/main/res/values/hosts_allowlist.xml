@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Android Auto host (com.google.android.projection.gearhead): signing certificate SHA-256 digests,
+         read from the installed APK's v3 signing block (current key and the older key in its rotation lineage). -->
+    <array name="hosts_allowlist">
+        <item>1ca8dcc0bed3cbd872d2cb791200c0292ca9975768a82d676b8b424fb65b5295,com.google.android.projection.gearhead</item>
+        <item>fdb00c43dbde8b51cb312aa81d3b5fa17713adb94b28f598d77f8eb89daceedf,com.google.android.projection.gearhead</item>
+    </array>
+</resources>

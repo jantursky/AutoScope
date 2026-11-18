@@ -1,6 +1,7 @@
 package com.jantursky.autoscope.car
 
 import android.content.Intent
+import android.content.pm.ApplicationInfo
 import android.content.res.Configuration
 import androidx.car.app.CarAppService
 import androidx.car.app.Screen
@@ -9,13 +10,22 @@ import androidx.car.app.validation.HostValidator
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import com.jantursky.autoscope.AppContainer
+import com.jantursky.autoscope.R
 import com.jantursky.autoscope.container
 
 /** Entry point for Android Auto. Declared in the manifest with the POI category. */
 class AutoScopeCarService : CarAppService() {
 
-    // Personal use app installed outside Play: any host may bind, including the DHU and unsigned builds.
-    override fun createHostValidator(): HostValidator = HostValidator.ALLOW_ALL_HOSTS_VALIDATOR
+    // Release builds accept only the Android Auto host (see res/values/hosts_allowlist.xml).
+    // Debuggable builds accept any host so other DHU or host builds can bind during development.
+    override fun createHostValidator(): HostValidator {
+        val debuggable = applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE != 0
+        return if (debuggable) {
+            HostValidator.ALLOW_ALL_HOSTS_VALIDATOR
+        } else {
+            HostValidator.Builder(applicationContext).addAllowedHosts(R.array.hosts_allowlist).build()
+        }
+    }
 
     override fun onCreateSession(): Session = AutoScopeSession(container)
 }
