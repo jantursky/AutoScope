@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Required by the Car App Library to bind the host to the app. -->
+    <uses-permission android:name="androidx.car.app.ACCESS_SURFACE" />
+
+    <application
+        android:label="AutoScope spike A (${carCategory})"
+        android:allowBackup="false">
+
+        <!-- Declares the app as a template app for Android Auto. -->
+        <meta-data
+            android:name="com.google.android.gms.car.application"
+            android:resource="@xml/automotive_app_desc" />
+
+        <!-- Lowest Car App API level this spike needs (PaneTemplate = level 1). -->
+        <meta-data
+            android:name="androidx.car.app.minCarApiLevel"
+            android:value="1" />
+
+        <service
+            android:name=".HelloCarAppService"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="androidx.car.app.CarAppService" />
+                <!-- Category is injected per flavor: IOT or POI. -->
+                <category android:name="${carCategory}" />
+            </intent-filter>
+        </service>
+    </application>
+</manifest>

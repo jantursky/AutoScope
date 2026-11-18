@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <path
+        android:fillColor="#1F2933"
+        android:pathData="M0,0h108v108h-108z" />
+    <!-- Scope ring and crosshair. -->
+    <path
+        android:strokeColor="#4FC3F7"
+        android:strokeWidth="5"
+        android:pathData="M54,54m-26,0a26,26 0,1 1,52 0a26,26 0,1 1,-52 0" />
+    <path
+        android:strokeColor="#4FC3F7"
+        android:strokeWidth="5"
+        android:pathData="M54,20v18M54,70v18M20,54h18M70,54h18" />
+</vector>

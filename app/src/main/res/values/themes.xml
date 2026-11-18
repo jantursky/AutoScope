@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- DayNight themes exist from API 29; API 28 stays light. -->
+    <style name="Theme.AutoScope" parent="android:Theme.DeviceDefault.Light" />
+</resources>

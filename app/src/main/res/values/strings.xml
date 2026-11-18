@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">AutoScope</string>
+    <string name="save_snapshot">Save snapshot</string>
+    <string name="saved_toast">Saved %1$s</string>
+    <string name="refresh_interval">Refresh interval</string>
+    <string name="live_report">Live report</string>
+    <string name="saved_reports">Saved reports</string>
+    <string name="no_saved_reports">No saved reports yet.</string>
+    <string name="share">Share</string>
+    <string name="share_chooser">Share report</string>
+    <string name="interval_500">0.5 s</string>
+    <string name="interval_1000">1 s</string>
+    <string name="interval_2000">2 s</string>
+    <string name="interval_5000">5 s</string>
+    <string name="interval_10000">10 s</string>
+    <string name="waiting_for_data">Waiting for data...</string>
+</resources>

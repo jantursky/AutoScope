@@ -1,0 +1,125 @@
+package com.jantursky.autoscope.car
+
+import com.jantursky.autoscope.core.Field
+import com.jantursky.autoscope.core.Group
+import com.jantursky.autoscope.core.Snapshot
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotEquals
+import org.junit.Assert.assertTrue
+import org.junit.Test
+
+class CarRowsTest {
+
+    private fun rows(n: Int) = (1..n).map { UiRow("Row $it", listOf("v")) }
+
+    @Test
+    fun `short text stays on one line`() {
+        assertEquals(listOf("42 (OK)"), CarRows.splitText("42 (OK)"))
+    }
+
+    @Test
+    fun `long text wraps at spaces into two lines and is cut with an ellipsis`() {
+        val text = (1..40).joinToString(" ") { "word$it" }
+        val lines = CarRows.splitText(text, maxLine = 20)
+
+        assertEquals(2, lines.size)
+        assertTrue(lines.all { it.length <= 20 })
+        assertEquals("word1 word2 word3", lines[0])
+        assertTrue(lines[1].endsWith("…"))
+    }
+
+    @Test
+    fun `a word longer than a line is cut hard`() {
+        val lines = CarRows.splitText("x".repeat(50), maxLine = 20)
+        assertEquals("x".repeat(20), lines[0])
+        assertEquals(20, lines[1].length)
+    }
+
+    @Test
+    fun `empty text becomes a dash`() {
+        assertEquals(listOf("-"), CarRows.splitText("  "))
+    }
+
+    @Test
+    fun `rows that fit the limit make one page without navigation`() {
+        val page = CarRows.page(rows(6), limit = 6, index = 0, canGoDeeper = true)
+        assertEquals(1, page.count)
+        assertEquals(6, page.rows.size)
+    }
+
+    @Test
+    fun `longer content gets a next page row on every page but the last`() {
+        val all = rows(12)
+        val first = CarRows.page(all, limit = 6, index = 0, canGoDeeper = true)
+        val last = CarRows.page(all, limit = 6, index = 2, canGoDeeper = true)
+
+        assertEquals(3, first.count)
+        assertEquals(6, first.rows.size)
+        assertEquals(RowAction.NEXT_PAGE, first.rows.last().action)
+        assertEquals("Page 2 of 3", first.rows.last().lines.single())
+        assertEquals(listOf("Row 11", "Row 12"), last.rows.map { it.title })
+    }
+
+    @Test
+    fun `at the depth limit the last row says how many rows remain`() {
+        val page = CarRows.page(rows(12), limit = 6, index = 0, canGoDeeper = false)
+        val tail = page.rows.last()
+
+        assertEquals(null, tail.action)
+        assertTrue(tail.lines.single().startsWith("7 more"))
+    }
+
+    @Test
+    fun `a bad host limit still shows one row per page`() {
+        val page = CarRows.page(rows(3), limit = 0, index = 0, canGoDeeper = true)
+        assertEquals(listOf("Row 1", "Next page"), page.rows.map { it.title })
+    }
+
+    @Test
+    fun `an empty view shows a no data row`() {
+        assertEquals("No data", CarRows.page(emptyList(), 6, 0, true).rows.single().title)
+    }
+
+    @Test
+    fun `log rows have stable titles so new entries refresh instead of adding a step`() {
+        val first = CarRows.logRows(listOf(Field.ok("10:00:00.000", "Session ON_CREATE", "log")))
+        val second = CarRows.logRows(
+            listOf(Field.ok("10:00:01.000", "Screen Root ON_START", "log"), Field.ok("10:00:00.000", "Session ON_CREATE", "log")),
+        )
+
+        assertEquals("#1", first.single().title)
+        assertEquals(first.single().title, second.first().title)
+        assertEquals("10:00:01.000 Screen Root ON_START", second.first().lines.single())
+    }
+
+    @Test
+    fun `overview starts with the diagnostic marking, mark and log rows`() {
+        val snapshot = Snapshot(mapOf(Group.HOST to listOf(Field.ok("Host package", "gearhead", "test"))))
+        val rows = ViewRows.rows(CarView.OVERVIEW, snapshot, apiLevel = 8, missingPermissions = emptyList())
+
+        assertEquals("AutoScope diagnostic tool", rows[0].title)
+        assertEquals("Car App API level 8 (host)", rows[0].lines.single())
+        assertEquals(RowAction.MARK, rows[1].action)
+        assertEquals(RowAction.OPEN_LOG, rows[2].action)
+        assertEquals("gearhead (OK)", rows[3].lines.single())
+    }
+
+    @Test
+    fun `hardware view lists missing permissions in its grant row`() {
+        val rows = ViewRows.rows(CarView.HARDWARE, Snapshot.EMPTY, 8, listOf(CarPermissions.CAR_SPEED, CarPermissions.FINE_LOCATION))
+
+        assertEquals(RowAction.GRANT_PERMISSIONS, rows.single().action)
+        assertEquals("Missing: CAR_SPEED, ACCESS_FINE_LOCATION", rows.single().lines.single())
+    }
+
+    @Test
+    fun `tabs fit the TabTemplate limit and a view changes only with its own groups`() {
+        assertTrue(CarView.TABS.size in 2..4)
+        val before = Snapshot(mapOf(Group.HARDWARE to listOf(Field.ok("Make", "A", "t"))))
+        val otherGroup = Snapshot(before.groups + (Group.SCREEN to listOf(Field.ok("Width", "1", "t"))))
+        val ownGroup = Snapshot(mapOf(Group.HARDWARE to listOf(Field.ok("Make", "B", "t"))))
+
+        assertEquals(CarView.HARDWARE.visible(before), CarView.HARDWARE.visible(otherGroup))
+        assertNotEquals(CarView.HARDWARE.visible(before), CarView.HARDWARE.visible(ownGroup))
+    }
+}
