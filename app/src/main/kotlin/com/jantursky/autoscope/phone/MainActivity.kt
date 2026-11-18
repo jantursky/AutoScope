@@ -4,10 +4,12 @@ import android.app.Activity
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
+import android.content.pm.PackageManager
 import android.os.Bundle
 import android.os.SystemClock
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Button
 import android.widget.FrameLayout
 import android.widget.LinearLayout
 import android.widget.ScrollView
@@ -33,6 +35,13 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 
 private const val STATE_TAB = "selected_tab"
+private const val REQUEST_CAR_PERMISSIONS = 1
+private val CAR_RUNTIME_PERMISSIONS = listOf(
+    "com.google.android.gms.permission.CAR_SPEED",
+    "com.google.android.gms.permission.CAR_FUEL",
+    "com.google.android.gms.permission.CAR_MILEAGE",
+    "android.permission.ACCESS_FINE_LOCATION",
+)
 private val CLOCK = DateTimeFormatter.ofPattern("HH:mm:ss")
 
 /**
@@ -49,6 +58,7 @@ class MainActivity : Activity() {
     private lateinit var connectionExtras: ConnectionExtrasView
     private lateinit var screenView: ScreenPreviewView
     private lateinit var groupHost: FrameLayout
+    private lateinit var grantButton: Button
     private lateinit var changesPage: LinearLayout
     private lateinit var changesHolder: LinearLayout
     private lateinit var reportsPage: ReportsPageView
@@ -124,6 +134,11 @@ class MainActivity : Activity() {
         connectionExtras = ConnectionExtrasView(this)
         screenView = ScreenPreviewView(this)
         groupHost = FrameLayout(this)
+        grantButton = Button(this).apply {
+            setText(R.string.grant_car_permissions)
+            isAllCaps = false
+            setOnClickListener { requestCarPermissions() }
+        }
         changesHolder = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
         changesPage = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
@@ -134,7 +149,7 @@ class MainActivity : Activity() {
         helpPage = helpPage()
         val column = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
-            listOf(carPage, connectionExtras, screenView, groupHost, changesPage, reportsPage, helpPage).forEach(::addView)
+            listOf(carPage, connectionExtras, screenView, grantButton, groupHost, changesPage, reportsPage, helpPage).forEach(::addView)
         }
         scroll = ScrollView(this).apply {
             id = R.id.report_scroll
@@ -201,12 +216,37 @@ class MainActivity : Activity() {
         shownKey = id.key
         carPage.visibility = if (id == TabId.Car) View.VISIBLE else View.GONE
         groupHost.visibility = if (id is TabId.OfGroup) View.VISIBLE else View.GONE
+        updateGrantButton()
         connectionExtras.visibility = if (id == TabId.OfGroup(Group.CONNECTION)) View.VISIBLE else View.GONE
         screenView.visibility = if (id == TabId.OfGroup(Group.SCREEN)) View.VISIBLE else View.GONE
         changesPage.visibility = if (id == TabId.Changes) View.VISIBLE else View.GONE
         reportsPage.visibility = if (id == TabId.Reports) View.VISIBLE else View.GONE
         helpPage.visibility = if (id == TabId.Help) View.VISIBLE else View.GONE
         scroll.post { scroll.scrollTo(0, scrollPositions[id.key] ?: 0) }
+    }
+
+    /** Runtime permissions the car data needs and the app does not hold yet. */
+    private fun missingCarPermissions(): List<String> =
+        CAR_RUNTIME_PERMISSIONS.filter { checkSelfPermission(it) != PackageManager.PERMISSION_GRANTED }
+
+    /** Shown only on the Permissions tab while a runtime permission is missing. */
+    private fun updateGrantButton() {
+        val show = !demo && shownKey == TabId.OfGroup(Group.PERMISSIONS).key && missingCarPermissions().isNotEmpty()
+        grantButton.visibility = if (show) View.VISIBLE else View.GONE
+    }
+
+    /** Asks on the phone, where the dialog works even when Android Auto blocks it in the car. */
+    private fun requestCarPermissions() {
+        val missing = missingCarPermissions()
+        if (missing.isNotEmpty()) requestPermissions(missing.toTypedArray(), REQUEST_CAR_PERMISSIONS)
+    }
+
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == REQUEST_CAR_PERMISSIONS) {
+            container.repository.refresh()
+            updateGrantButton()
+        }
     }
 
     private fun saveSnapshot() {

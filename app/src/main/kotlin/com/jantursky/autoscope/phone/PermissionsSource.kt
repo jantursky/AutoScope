@@ -12,7 +12,7 @@ fun interface PermissionChecker {
 
 private data class Tracked(val label: String, val permission: String, val runtime: Boolean)
 
-private const val RUNTIME_HINT = "Tap Grant permissions on the Hardware tab or More > Permissions in the car, or grant it in phone Settings"
+private const val RUNTIME_HINT = "Tap Grant car permissions on the phone Permissions tab, or Grant permissions on the car Hardware tab (the car blocks it while it thinks you are driving)"
 private const val INSTALL_HINT = "Install time permission, only declared in the manifest. Reinstall the app to get it"
 
 private val TRACKED = listOf(

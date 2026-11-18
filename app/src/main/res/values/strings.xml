@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">AutoScope</string>
+    <string name="grant_car_permissions">Grant car permissions</string>
     <string name="save_snapshot">Save snapshot</string>
     <string name="saved_toast">Saved %1$s</string>
     <string name="refresh_interval">Refresh interval</string>
