@@ -1,25 +1,29 @@
 # Known limitations
 
-Nothing in the app has run on a DHU or in a car yet. The Step 0 spikes launched on a DHU (Android 15 emulator, Android Auto 18.0.664264, Car App API level 8), with "Unknown sources" on and off.
+Tested so far: the Step 0 spikes and an earlier build of the app on a DHU (Android 15 emulator, Android Auto 18.0.664264, Car App API level 8), with "Unknown sources" on and off. The latest car-side changes (dark Visual surface, shorter rows, car drawing, "Refresh values") were not rechecked there. Nothing has run in a real car.
 
 ## Library limits
 
-- **Four tabs, not six.** `TabTemplate` allows 2 to 4 tabs. Constraints share the Screen tab, the lifecycle log is one screen deeper, and phone data sits in Overview.
+- **Four tabs, not six.** `TabTemplate` allows 2 to 4 tabs. Constraints share the Screen tab, phone data sits in Overview, and Touch, Visual, Sensors, Network, Permissions and Log are behind the More tab.
 - **Paging is limited by depth.** A host allows 5 templates per task. Extra pages open as new screens, so a list goes at most 4 screens deep. Rows beyond that are only in the saved report.
 - **No refresh rate number is documented.** The constraints tab says so instead of showing a measured value.
 - **Content limits.** `ConstraintManager` returns the library default when the host call fails, so that case looks like a real value.
-- **Rows are short.** A row holds two text lines of 60 characters; longer values are cut with "…".
+- **Rows are short.** A row holds two text lines of 60 characters; longer values are cut with "…". Car rows use short status words instead of full reasons; the phone and the saved report keep the full text.
+- **Live values do not tick.** Speed, memory and other continuously changing values would reset the list scroll every refresh, so the car updates them only on "Refresh values". A list also counts as a refresh only while its row count and titles stay the same.
 
 ## Touch and surface
 
 - Whether a POI app's `MapWithContentTemplate` gets a surface and gesture callbacks on a real host is untested. Gestures need the `Action.PAN` button. If no surface arrives within 3 s the tester shows UNAVAILABLE and a tap latency test replaces it.
-- Visible and stable area are known only after the touch tester was opened, and only on Car App API 7+.
+- Visible and stable area are known only after the touch tester was opened, and only on Car App API 7+. The DHU did not report them.
+- **Visual** needs Car App API 7 and a map surface. On other hosts it shows a message instead. Its pane text wraps at 28 characters, and the speed arc is fixed at 0 to 200 km/h.
 
 ## Hardware
 
 - Speed, fuel and mileage need the user to grant car permissions on the phone. A missing grant can show as an error or an empty value, depending on the host.
 - `EvStatus` is experimental in the library and has no documented Android Auto permission.
 - Odometer comes from `Mileage.getOdometerMeters`, which returns kilometers according to the docs.
+- Accelerometer units (m/s²) and axes (x right, y up) are assumed from the docs and were never seen on a host. The DHU feeds no car data, so the compass, g-force dot, car rotation, energy bar and charge port have only been exercised with fakes.
+- An energy percentage outside 0 to 100 is shown as missing.
 - Sensors return `STATUS_UNIMPLEMENTED` on Android Automotive OS. AutoScope targets Android Auto.
 
 ## Values
@@ -30,7 +34,16 @@ Nothing in the app has run on a DHU or in a car yet. The Step 0 spikes launched 
 - Thermal status is unavailable on Android 9 (API 28).
 - Wi-Fi band and speed describe the phone's current Wi-Fi network, not necessarily the wireless Android Auto link. On API 28 they come from the deprecated `WifiManager.connectionInfo`.
 - "Time connected" counts from the first value the process saw. "Reconnects" counts connections after the first one in this process.
+- The Wi-Fi chip rates the phone's Wi-Fi: green needs 5 or 6 GHz at 200 Mbps or more, 2.4 GHz is never green.
+- The phone's connection timeline keeps the last 50 changes and starts empty when the process starts.
+- The screen drawing is to scale for the pixel size the host reports. Its diagonals only mark the corners; they carry no measurement.
 - Android Auto version fields need the `<queries>` entry on API 30+.
+
+## Phone app
+
+- Copy report, Delete and Delete all are covered by unit tests but were not run on a device.
+- The update time in the header can clip on screens narrower than about 360 dp.
+- Report file names cut the reason after 32 characters.
 
 ## Distribution
 
