@@ -1,0 +1,5 @@
+AutoScope runs on the car screen through Android Auto and shows what the host, the display, the touch layer and the car hardware report. The phone app shows the same live report, with a verdict card, a top-down car, connection timeline and Wi-Fi quality, and saves it as JSON and text.
+
+It is a developer tool for personal use. Everything stays on the device: there is no network permission and no analytics.
+
+Car side: Overview, Screen, Hardware and More (touch tester, visual dashboard, sensors, network, permissions, log). Needs developer mode in Android Auto and "Unknown sources" enabled.

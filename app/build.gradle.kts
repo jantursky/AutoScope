@@ -14,6 +14,24 @@ android {
         versionName = "1.0.0"
     }
 
+    // Release signing comes from the environment, so a plain checkout (and F-Droid, which signs
+    // with its own key) builds without any secrets.
+    val keystorePath = providers.environmentVariable("AUTOSCOPE_KEYSTORE").orNull
+    if (keystorePath != null) {
+        signingConfigs.create("release") {
+            storeFile = file(keystorePath)
+            storePassword = providers.environmentVariable("AUTOSCOPE_KEYSTORE_PASSWORD").get()
+            keyAlias = "autoscope"
+            keyPassword = providers.environmentVariable("AUTOSCOPE_KEYSTORE_PASSWORD").get()
+        }
+    }
+
+    buildTypes {
+        release {
+            if (keystorePath != null) signingConfig = signingConfigs.getByName("release")
+        }
+    }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17

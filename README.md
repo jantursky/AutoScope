@@ -1,3 +1,7 @@
+<p align="center">
+  <img src=".github/assets/banner.svg" alt="AutoScope: android auto diagnostics" width="420">
+</p>
+
 # AutoScope
 
 Android Auto diagnostics. AutoScope runs on the car screen through Android Auto and shows what the host, the screen, the touch layer and the car hardware report. A phone screen shows the same live report and saves it as JSON and text.
@@ -7,6 +11,10 @@ It is a developer tool for personal use, installed outside Google Play. Everythi
 ## Status
 
 Built with `./gradlew assembleDebug`, with JVM unit tests for the data layer and the phone models. An earlier build ran on the Desktop Head Unit (DHU): the four tabs, the touch tester and the Visual dashboard opened. Later changes (dark Visual surface, shorter rows, car drawing, "Refresh values") are not rechecked there, and nothing has run in a real car. See [KNOWN_LIMITATIONS.md](KNOWN_LIMITATIONS.md) and [SPIKE.md](SPIKE.md).
+
+## Install
+
+Download `AutoScope-1.0.0.apk` from the [latest release](https://github.com/jantursky/AutoScope/releases/latest) and open it on the phone, or run `adb install AutoScope-1.0.0.apk`. Then follow [Setup](#setup) for developer mode and "Unknown sources". F-Droid is planned; the store metadata is in `fastlane/`.
 
 ## What is in the car
 
@@ -124,6 +132,89 @@ spikes/    Step 0 feasibility spikes: car app (IOT, POI) and media app
 scripts/   dev.sh (one command), DHU setup, spike install
 .github/   CI workflow, logo
 ```
+
+<!-- PROJECTS:START -->
+## Other Projects & Products
+
+<table align="center">
+  <tr>
+    <td align="center" valign="top" width="33%">
+      <a href="https://github.com/jantursky/" target="_blank" rel="noopener noreferrer">
+        <picture>
+          <source media="(prefers-color-scheme: dark)" srcset="https://apptiary.com/projects/icons/github-dark.svg">
+          <img src="https://apptiary.com/projects/icons/github-light.svg" alt="GitHub Profile" width="48" height="48">
+        </picture>
+        <br><b>GitHub Profile</b>
+      </a>
+      <br><sub>Open-source repositories &amp; code</sub>
+    </td>
+    <td align="center" valign="top" width="33%">
+      <a href="https://podcasttotranscript.com/?utm_source=AutoScope&amp;utm_medium=readme&amp;utm_campaign=other-projects&amp;utm_content=podcast-to-transcript" target="_blank" rel="noopener noreferrer">
+        <picture>
+          <source media="(prefers-color-scheme: dark)" srcset="https://apptiary.com/projects/icons/podcasttotranscript-dark.svg">
+          <img src="https://apptiary.com/projects/icons/podcasttotranscript-light.svg" alt="Podcast To Transcript" width="48" height="48">
+        </picture>
+        <br><b>Podcast To Transcript</b>
+      </a>
+      <br><sub>Podcast transcripts, summaries &amp; chapters</sub>
+    </td>
+    <td align="center" valign="top" width="33%">
+      <a href="https://loupekit.com/?utm_source=AutoScope&amp;utm_medium=readme&amp;utm_campaign=other-projects&amp;utm_content=loupekit" target="_blank" rel="noopener noreferrer">
+        <picture>
+          <source media="(prefers-color-scheme: dark)" srcset="https://apptiary.com/projects/icons/loupekit-light.svg">
+          <img src="https://apptiary.com/projects/icons/loupekit-light.svg" alt="LoupeKit" width="48" height="48">
+        </picture>
+        <br><b>LoupeKit</b>
+      </a>
+      <br><sub>Tech stack, design tokens, AI code checker</sub>
+    </td>
+  </tr>
+  <tr>
+    <td align="center" valign="top" width="33%">
+      <a href="https://textarray.com/?utm_source=AutoScope&amp;utm_medium=readme&amp;utm_campaign=other-projects&amp;utm_content=textarray" target="_blank" rel="noopener noreferrer">
+        <picture>
+          <source media="(prefers-color-scheme: dark)" srcset="https://apptiary.com/projects/icons/textarray-light.svg">
+          <img src="https://apptiary.com/projects/icons/textarray-light.svg" alt="TextArray" width="48" height="48">
+        </picture>
+        <br><b>TextArray</b>
+      </a>
+      <br><sub>Online text transformation tool</sub>
+    </td>
+    <td align="center" valign="top" width="33%">
+      <a href="https://addonhive.com/?utm_source=AutoScope&amp;utm_medium=readme&amp;utm_campaign=other-projects&amp;utm_content=addonhive" target="_blank" rel="noopener noreferrer">
+        <picture>
+          <source media="(prefers-color-scheme: dark)" srcset="https://apptiary.com/projects/icons/addonhive-dark-v3.svg">
+          <img src="https://apptiary.com/projects/icons/addonhive-light-v3.svg" alt="AddonHive" width="48" height="48">
+        </picture>
+        <br><b>AddonHive</b>
+      </a>
+      <br><sub>Addons &amp; integrations hub</sub>
+    </td>
+    <td align="center" valign="top" width="33%">
+      <a href="https://apptiary.com/mobile/games/?utm_source=AutoScope&amp;utm_medium=readme&amp;utm_campaign=other-projects&amp;utm_content=mobile-games-and-apps" target="_blank" rel="noopener noreferrer">
+        <picture>
+          <source media="(prefers-color-scheme: dark)" srcset="https://apptiary.com/projects/icons/stores-dark-v2.svg">
+          <img src="https://apptiary.com/projects/icons/stores-light-v2.svg" alt="Mobile Games &amp; Apps" width="48" height="48">
+        </picture>
+        <br><b>Mobile Games &amp; Apps</b>
+      </a>
+      <br><sub>Android &amp; iOS Applications</sub>
+    </td>
+  </tr>
+  <tr>
+    <td align="center" valign="top" width="33%">
+      <a href="https://jantursky.com/?utm_source=AutoScope&amp;utm_medium=readme&amp;utm_campaign=other-projects&amp;utm_content=and-more" target="_blank" rel="noopener noreferrer">
+        <picture>
+          <source media="(prefers-color-scheme: dark)" srcset="https://apptiary.com/projects/icons/more-dark.svg">
+          <img src="https://apptiary.com/projects/icons/more-light.svg" alt="And more" width="48" height="48">
+        </picture>
+        <br><b>And more</b>
+      </a>
+      <br><sub>More projects, writing &amp; contact</sub>
+    </td>
+  </tr>
+</table>
+<!-- PROJECTS:END -->
 
 ## License
 
