@@ -71,6 +71,7 @@ private fun Context.menuRow(entry: MenuEntry, radio: Boolean, onClick: () -> Uni
     val text = getString(
         when (val action = entry.action) {
             MenuAction.Save -> R.string.save_snapshot
+            MenuAction.Copy -> R.string.copy_report
             is MenuAction.Interval -> intervalLabel(action.millis)
             is MenuAction.Theme -> THEME_LABELS.getValue(action.mode)
         },
@@ -82,7 +83,7 @@ private fun Context.menuRow(entry: MenuEntry, radio: Boolean, onClick: () -> Uni
             scaleType = ImageView.ScaleType.CENTER
             importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO
             when {
-                !radio -> setImageResource(R.drawable.ic_save)
+                !radio -> setImageResource(if (entry.action == MenuAction.Copy) R.drawable.ic_copy else R.drawable.ic_save)
                 entry.checked -> setImageResource(R.drawable.ic_check)
             }
         }

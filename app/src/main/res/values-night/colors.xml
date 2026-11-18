@@ -23,4 +23,10 @@
     <color name="car_link_native">#42B2FC</color>
     <color name="car_charge_open">#FFB74D</color>
     <color name="car_charge_connected">#4CD27A</color>
+    <color name="tone_good_bg">#1B3A28</color>
+    <color name="tone_good_text">#7FE0A0</color>
+    <color name="tone_warning_bg">#3A2C12</color>
+    <color name="tone_warning_text">#FFB74D</color>
+    <color name="tone_bad_bg">#3F1E1B</color>
+    <color name="tone_bad_text">#FF8A80</color>
 </resources>

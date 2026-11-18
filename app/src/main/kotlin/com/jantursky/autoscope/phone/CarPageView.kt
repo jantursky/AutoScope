@@ -6,14 +6,16 @@ import android.widget.LinearLayout
 import com.jantursky.autoscope.CarTelemetry
 import com.jantursky.autoscope.core.Snapshot
 
-/** The Car tab: the drawn car and a legend card whose rows say the same thing in numbers. Updated in place by [bind]. */
+/** The Car tab: the verdict card, the drawn car and a legend card whose rows say the same thing in numbers. Updated in place by [bind]. */
 internal class CarPageView(context: Context) : LinearLayout(context) {
-    private val idle = carPicture(CarTelemetry.EMPTY, Snapshot.EMPTY)
-    private val picture = CarPictureView(context, idle)
-    private val rows = idle.rows.map { RowView(context) }
+    private val idle = carPageModel(CarTelemetry.EMPTY, Snapshot.EMPTY)
+    private val verdict = VerdictCardView(context)
+    private val picture = CarPictureView(context, idle.picture)
+    private val rows = idle.picture.rows.map { RowView(context) }
 
     init {
         orientation = VERTICAL
+        addView(verdict)
         addView(context.card().apply {
             addView(picture, LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT))
         })
@@ -26,8 +28,9 @@ internal class CarPageView(context: Context) : LinearLayout(context) {
         bind(idle)
     }
 
-    fun bind(next: CarPicture) {
-        picture.bind(next)
-        rows.zip(next.rows).forEach { (view, row) -> view.bind(row) }
+    fun bind(next: CarPageModel) {
+        verdict.bind(next.verdict, next.wifi)
+        picture.bind(next.picture)
+        rows.zip(next.picture.rows).forEach { (view, row) -> view.bind(row) }
     }
 }

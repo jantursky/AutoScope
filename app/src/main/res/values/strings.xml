@@ -35,4 +35,25 @@
     <string name="help_step_2">On the phone, open Android Auto, tap the three-dot menu and choose Start head unit server. This cannot be automated and must be repeated after every Desktop Head Unit session.</string>
     <string name="help_step_3">Open AutoScope in the car launcher. Grant permissions from the Hardware tab or More &gt; Permissions in the car only if some are still missing.</string>
     <string name="help_first_time">First time only: enable developer mode by tapping Version about 10 times in Android Auto settings.</string>
+    <string name="copy_report">Copy report</string>
+    <string name="report_copied">Report copied</string>
+    <string name="delete">Delete</string>
+    <string name="cancel">Cancel</string>
+    <string name="delete_all">Delete all</string>
+    <string name="reports_hint">Long-press a report to delete it</string>
+    <string name="delete_report_title">Delete this report?</string>
+    <string name="delete_report_message">%1$s will be removed from this phone, including its JSON and text files.</string>
+    <string name="delete_all_title">Delete all %1$d saved reports?</string>
+    <string name="delete_all_message">Their JSON and text files are removed from this phone. Copies you already shared are not affected.</string>
+    <string name="car_check_title">Compatibility</string>
+    <string name="car_values">Car values</string>
+    <string name="touch_tester">Touch tester</string>
+    <string name="car_values_count">%1$d of %2$d OK</string>
+    <string name="timeline_title">Connection timeline</string>
+    <string name="timeline_empty">No connection changes yet in this app session</string>
+    <string name="wifi_title">Phone Wi-Fi</string>
+    <string name="wifi_note">This is the phone\'s Wi-Fi network, not necessarily the projection link.</string>
+    <string name="screen_preview_title">Car display</string>
+    <string name="visible_area">Visible area</string>
+    <string name="stable_area">Stable area</string>
 </resources>

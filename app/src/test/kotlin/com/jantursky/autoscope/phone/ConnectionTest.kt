@@ -56,6 +56,26 @@ class ConnectionTrackerTest {
     }
 }
 
+class ConnectionHistoryTest {
+    @Test fun recordsEveryChangeButNotRepeats() {
+        val t = ConnectionTracker()
+        t.onType(OFF, 0)
+        t.onType(OFF, 5)
+        t.onType(PROJECTION, 10)
+        t.onType(NATIVE, 20)
+        assertEquals(listOf(ConnectionEvent(OFF, 0), ConnectionEvent(PROJECTION, 10), ConnectionEvent(NATIVE, 20)), t.history())
+    }
+
+    @Test fun keepsOnlyTheMostRecentEvents() {
+        val t = ConnectionTracker()
+        repeat(80) { t.onType(if (it % 2 == 0) OFF else PROJECTION, it.toLong()) }
+        val history = t.history()
+        assertEquals(50, history.size)
+        assertEquals(30L, history.first().at)
+        assertEquals(79L, history.last().at)
+    }
+}
+
 class CarConnectionSourceTest {
     @Test fun noValueYetIsUnavailable() {
         val fields = CarConnectionSource(ConnectionTracker()) { 0 }.read()

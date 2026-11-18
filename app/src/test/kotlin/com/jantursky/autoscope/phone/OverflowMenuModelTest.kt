@@ -32,7 +32,10 @@ class OverflowMenuModelTest {
         assertEquals(MenuAction.Theme(ThemeMode.DARK), entries.single { it.checked }.action)
     }
 
-    @Test fun saveEntryHasNoCheck() {
-        assertEquals(listOf(MenuEntry(MenuAction.Save, false)), section(MenuSectionKind.SNAPSHOT).entries)
+    @Test fun snapshotSectionHasSaveThenCopyWithoutChecks() {
+        assertEquals(
+            listOf(MenuEntry(MenuAction.Save, false), MenuEntry(MenuAction.Copy, false)),
+            section(MenuSectionKind.SNAPSHOT).entries,
+        )
     }
 }

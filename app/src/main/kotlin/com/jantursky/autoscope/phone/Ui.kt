@@ -47,3 +47,9 @@ internal fun View.tappable(@androidx.annotation.DrawableRes background: Int, onC
 internal fun TextView.setTextIfChanged(value: CharSequence) {
     if (text.toString() != value.toString()) text = value
 }
+
+/** Small bold title above a card. */
+internal fun Context.heading(@androidx.annotation.StringRes text: Int) = label(13f, R.color.text_secondary, bold = true).apply {
+    setText(text)
+    setPadding(dp(8), dp(8), dp(8), dp(8))
+}

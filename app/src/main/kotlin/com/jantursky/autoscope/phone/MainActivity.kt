@@ -1,22 +1,23 @@
 package com.jantursky.autoscope.phone
 
 import android.app.Activity
+import android.content.ClipData
+import android.content.ClipboardManager
 import android.content.Context
-import android.graphics.Typeface
 import android.os.Bundle
-import android.view.Gravity
+import android.os.SystemClock
 import android.view.View
 import android.view.ViewGroup
 import android.widget.FrameLayout
 import android.widget.LinearLayout
 import android.widget.ScrollView
-import android.widget.TextView
 import android.widget.Toast
 import com.jantursky.autoscope.R
 import com.jantursky.autoscope.Settings
 import com.jantursky.autoscope.container
 import com.jantursky.autoscope.core.Group
 import com.jantursky.autoscope.core.SavedReport
+import com.jantursky.autoscope.core.ReportFormat
 import com.jantursky.autoscope.core.Snapshot
 import java.time.Instant
 import java.time.LocalTime
@@ -45,10 +46,12 @@ class MainActivity : Activity() {
     private lateinit var tabBar: TabBarView
     private lateinit var scroll: ScrollView
     private lateinit var carPage: CarPageView
+    private lateinit var connectionExtras: ConnectionExtrasView
+    private lateinit var screenView: ScreenPreviewView
     private lateinit var groupHost: FrameLayout
     private lateinit var changesPage: LinearLayout
     private lateinit var changesHolder: LinearLayout
-    private lateinit var savedList: LinearLayout
+    private lateinit var reportsPage: ReportsPageView
     private lateinit var helpPage: LinearLayout
     private var groupCard: GroupCardView? = null
     private var models = emptyList<GroupModel>()
@@ -81,7 +84,7 @@ class MainActivity : Activity() {
         scope = collector
         collector.launch { container.repository.snapshot.collect(::show) }
         collector.launch {
-            combine(container.carSources.telemetry, container.repository.snapshot, ::carPicture)
+            combine(container.carSources.telemetry, container.repository.snapshot, ::carPageModel)
                 .distinctUntilChanged()
                 .collect(carPage::bind)
         }
@@ -99,6 +102,7 @@ class MainActivity : Activity() {
         header = HeaderView(this, container.settings) { action ->
             when (action) {
                 MenuAction.Save -> saveSnapshot()
+                MenuAction.Copy -> copyReport()
                 is MenuAction.Interval -> container.settings.refreshMillis = action.millis
                 is MenuAction.Theme -> {
                     container.settings.themeMode = action.mode
@@ -108,18 +112,20 @@ class MainActivity : Activity() {
         }
         tabBar = TabBarView(this) { selectedKey = it.key; render() }
         carPage = CarPageView(this)
+        connectionExtras = ConnectionExtrasView(this)
+        screenView = ScreenPreviewView(this)
         groupHost = FrameLayout(this)
         changesHolder = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
         changesPage = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
-            addView(sectionTitle(R.string.changes_title))
+            addView(heading(R.string.changes_title))
             addView(changesHolder)
         }
-        savedList = card()
+        reportsPage = ReportsPageView(this, ::shareReport, ::confirmDeleteReport, ::confirmDeleteAll)
         helpPage = helpPage()
         val column = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
-            listOf(carPage, groupHost, changesPage, savedList, helpPage).forEach(::addView)
+            listOf(carPage, connectionExtras, screenView, groupHost, changesPage, reportsPage, helpPage).forEach(::addView)
         }
         scroll = ScrollView(this).apply {
             id = R.id.report_scroll
@@ -146,13 +152,16 @@ class MainActivity : Activity() {
         }
     }
 
-    private fun sectionTitle(text: Int) = label(13f, R.color.text_secondary, bold = true).apply {
-        setText(text)
-        setPadding(dp(8), dp(8), dp(8), dp(8))
-    }
-
     private fun show(snapshot: Snapshot) {
         header.bind(connectionPill(snapshot), CLOCK.format(LocalTime.now()))
+        connectionExtras.bind(
+            connectionTimeline(
+                CarConnectionMonitor.shared(this).tracker.history(),
+                SystemClock.elapsedRealtime(), System.currentTimeMillis(), ZoneId.systemDefault(),
+            ),
+            wifiQuality(snapshot),
+        )
+        screenView.bind(screenPreview(snapshot))
         models = groupModels(snapshot)
         tabs = tabModels(models)
         render()
@@ -181,8 +190,10 @@ class MainActivity : Activity() {
         shownKey = id.key
         carPage.visibility = if (id == TabId.Car) View.VISIBLE else View.GONE
         groupHost.visibility = if (id is TabId.OfGroup) View.VISIBLE else View.GONE
+        connectionExtras.visibility = if (id == TabId.OfGroup(Group.CONNECTION)) View.VISIBLE else View.GONE
+        screenView.visibility = if (id == TabId.OfGroup(Group.SCREEN)) View.VISIBLE else View.GONE
         changesPage.visibility = if (id == TabId.Changes) View.VISIBLE else View.GONE
-        savedList.visibility = if (id == TabId.Reports) View.VISIBLE else View.GONE
+        reportsPage.visibility = if (id == TabId.Reports) View.VISIBLE else View.GONE
         helpPage.visibility = if (id == TabId.Help) View.VISIBLE else View.GONE
         scroll.post { scroll.scrollTo(0, scrollPositions[id.key] ?: 0) }
     }
@@ -193,61 +204,41 @@ class MainActivity : Activity() {
         showSavedReports()
     }
 
+    private fun copyReport() {
+        val text = ReportFormat.text(container.repository.snapshot.value, System.currentTimeMillis(), "Copied from the phone")
+        getSystemService(ClipboardManager::class.java).setPrimaryClip(ClipData.newPlainText(getString(R.string.live_report), text))
+        Toast.makeText(this, R.string.report_copied, Toast.LENGTH_SHORT).show()
+    }
+
+    private fun shareReport(report: SavedReport) =
+        startActivity(shareIntent(this, report, getString(R.string.share_chooser)))
+
+    private fun confirmDeleteReport(report: SavedReport) {
+        val label = savedReportLabel(report.id, Instant.now(), ZoneId.systemDefault(), Locale.getDefault())
+        val name = listOf(label.title, label.whenText.substringBefore("  ·")).filter { it.isNotEmpty() }.joinToString(", ")
+        confirmDelete(getString(R.string.delete_report_title), getString(R.string.delete_report_message, name)) {
+            deleteReport(report)
+            showSavedReports()
+        }
+    }
+
+    private fun confirmDeleteAll() {
+        val reports = container.reports.list()
+        confirmDelete(getString(R.string.delete_all_title, reports.size), getString(R.string.delete_all_message)) {
+            deleteReports(reports)
+            showSavedReports()
+        }
+    }
+
     private fun showSavedReports() {
-        savedList.removeAllViews()
         val reports = container.reports.list()
         showChanges(reports)
-        if (reports.isEmpty()) {
-            savedList.addView(
-                label(13f, R.color.text_tertiary).apply {
-                    setText(R.string.no_saved_reports)
-                    gravity = Gravity.CENTER
-                    setPadding(dp(16), dp(24), dp(16), dp(24))
-                },
-                LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT),
-            )
-            return
-        }
-        val now = Instant.now()
-        reports.forEachIndexed { index, report ->
-            if (index > 0) savedList.addView(divider())
-            val text = savedReportLabel(report.id, now, ZoneId.systemDefault(), Locale.getDefault())
-            savedList.addView(
-                savedRow(text) { startActivity(shareIntent(this, report, getString(R.string.share_chooser))) },
-                LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(56)),
-            )
-        }
+        reportsPage.bind(reports)
     }
 
     private fun showChanges(reports: List<SavedReport>) {
         val texts = reports.take(2).mapNotNull { runCatching { it.text.readText() }.getOrNull() }
         changesHolder.removeAllViews()
         changesHolder.addView(changesCard(if (texts.size == 2) texts[1] to texts[0] else null))
-    }
-
-    private fun savedRow(text: SavedReportLabel, onShare: () -> Unit) = LinearLayout(this).apply {
-        gravity = Gravity.CENTER_VERTICAL
-        setPadding(dp(16), 0, dp(8), 0)
-        val titles = LinearLayout(context).apply {
-            orientation = LinearLayout.VERTICAL
-            addView(label(14f, R.color.text_primary).apply { this.text = text.title })
-            if (text.whenText.isNotEmpty()) addView(label(12f, R.color.text_secondary).apply { this.text = text.whenText })
-        }
-        addView(titles, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
-        addView(
-            TextView(context).apply {
-                setText(R.string.share)
-                textSize = 13f
-                typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
-                setTextColor(color(R.color.accent))
-                gravity = Gravity.CENTER_VERTICAL
-                compoundDrawablePadding = dp(6)
-                setCompoundDrawablesRelativeWithIntrinsicBounds(R.drawable.ic_share, 0, 0, 0)
-                tappable(R.drawable.pill_tonal) { onShare() }
-                // After tappable(): setting a background resets the padding to the drawable's own.
-                setPadding(dp(12), 0, dp(14), 0)
-            },
-            LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, dp(48)),
-        )
     }
 }
