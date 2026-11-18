@@ -20,7 +20,7 @@ Tested in a real car: a Mazda CX-5 (2017) over USB, Android Auto 18.0.664264, Ca
 ## Install
 
 - **Google Play:** [AutoScope on Google Play](https://play.google.com/store/apps/details?id=com.jantursky.autoscope). The public listing is not live yet; for now the app is on an internal testing track. This is the install that works in a real car.
-- **APK:** download `AutoScope-1.1.0.apk` from the [latest release](https://github.com/jantursky/AutoScope/releases/latest) and open it on the phone, or run `adb install AutoScope-1.1.0.apk`. A sideloaded build shows up in a real car as a media app only (see below) and runs the full UI on the DHU. The Play build is signed with a different key, so uninstall one before installing the other.
+- **APK:** download `AutoScope-1.1.2.apk` from the [latest release](https://github.com/jantursky/AutoScope/releases/latest) and open it on the phone, or run `adb install AutoScope-1.1.2.apk`. A sideloaded build shows up in a real car as a media app only (see below) and runs the full UI on the DHU. The Play build is signed with a different key, so uninstall one before installing the other.
 - **F-Droid:** submitted ([merge request](https://gitlab.com/fdroid/fdroiddata/-/merge_requests/57998)); the store metadata is in `fastlane/`.
 
 Then follow [Setup](#setup) for developer mode.
@@ -91,7 +91,8 @@ Or double click `scripts/AutoScope-DHU.command`. The script checks the tools, in
 
 Speed, fuel, mileage and location need runtime permissions. Either:
 
-- open **Hardware** in the car and pick **Grant permissions**; the dialog appears on the phone and only while the car is parked, or
+- open the **Permissions** tab on the phone and tap **Grant car permissions**; this works any time, or
+- open **Hardware** in the car and pick **Grant permissions**; the dialog appears on the phone and only while Android Auto considers the car parked (the Mazda never did), or
 - run `adb shell pm grant com.jantursky.autoscope <permission>` for `com.google.android.gms.permission.CAR_SPEED`, `CAR_FUEL`, `CAR_MILEAGE` and `android.permission.ACCESS_FINE_LOCATION`.
 
 The Permissions view in the car and the Permissions tab on the phone list what is granted.
@@ -100,7 +101,7 @@ The Permissions view in the car and the Permissions tab on the phone list what i
 
 1. Install AutoScope from Google Play (an APK install only gives the media entry point).
 2. Connect the phone. Wired and wireless projection both work in principle; the Wi-Fi fields on the phone matter most for wireless. Open AutoScope from the car's app launcher.
-3. Grant the car permissions from the computer with `adb shell pm grant` (see above). The in-car "Grant permissions" dialog said it was not available while driving on the Mazda, so adb was the way.
+3. Grant the car permissions on the phone before you connect (see above). The in-car "Grant permissions" dialog said it was not available while driving on the Mazda, even when parked.
 
 If AutoScope does not show up in the launcher, check the launcher customisation in Android Auto settings.
 

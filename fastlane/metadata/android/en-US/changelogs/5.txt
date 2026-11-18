@@ -1,0 +1,1 @@
+Grant car permissions from the phone Permissions tab, Android Auto host allowlist in release builds, optional hardware features so more devices can install.
