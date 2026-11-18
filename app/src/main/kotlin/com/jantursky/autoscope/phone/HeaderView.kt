@@ -12,7 +12,7 @@ import com.jantursky.autoscope.R
 import com.jantursky.autoscope.ThemeMode
 
 /**
- * Sticky top bar: connection pill, last update time, refresh interval dropdown and theme menu.
+ * Sticky top bar: connection pill, last update time, refresh interval dropdown, save and theme menu.
  */
 internal class HeaderView(
     context: Context,
@@ -21,6 +21,7 @@ internal class HeaderView(
     selectedTheme: ThemeMode,
     private val onInterval: (Int) -> Unit,
     private val onTheme: (ThemeMode) -> Unit,
+    private val onSave: () -> Unit,
 ) : LinearLayout(context) {
     private val pill = context.label(12f, R.color.pill_disconnected_text, bold = true).apply {
         setPadding(context.dp(12), context.dp(6), context.dp(12), context.dp(6))
@@ -30,6 +31,7 @@ internal class HeaderView(
         fontFeatureSettings = "tnum"
     }
     private val intervalButton = context.label(13f, R.color.text_primary, bold = true)
+    private val saveButton = ImageView(context)
     private val themeButton = ImageView(context)
     private var interval = selectedInterval
     private var theme = selectedTheme
@@ -43,10 +45,12 @@ internal class HeaderView(
             addView(pill, LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT))
             addView(updated, LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f).apply { marginStart = context.dp(12) })
             addView(intervalButton, LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, context.dp(48)).apply { marginEnd = context.dp(4) })
+            addView(saveButton, LayoutParams(context.dp(48), context.dp(48)))
             addView(themeButton, LayoutParams(context.dp(48), context.dp(48)))
         }
         addView(bar)
         setUpIntervalButton()
+        setUpSaveButton()
         setUpThemeButton()
         bind(ConnectionPill("Not connected", PillKind.DISCONNECTED), "")
     }
@@ -69,6 +73,13 @@ internal class HeaderView(
         }
         // After tappable(): setting a background resets the padding to the drawable's own.
         setPadding(context.dp(16), 0, context.dp(12), 0)
+    }
+
+    private fun setUpSaveButton() = saveButton.apply {
+        scaleType = ImageView.ScaleType.CENTER
+        setImageResource(R.drawable.ic_save)
+        contentDescription = context.getString(R.string.save_snapshot)
+        tappable(R.drawable.icon_button) { onSave() }
     }
 
     private fun setUpThemeButton() = themeButton.apply {

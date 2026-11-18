@@ -27,7 +27,7 @@ sealed interface TabId {
     }
 }
 
-/** One chip: [badge] counts the fields that are a problem, 0 shows no badge. */
+/** One tab: [badge] counts the fields that are a problem, 0 shows no badge. */
 data class TabModel(val id: TabId, val title: String, val badge: Int)
 
 /** The Car tab, one tab per group that has fields in group order, then the fixed pages. The car page needs no data to exist. */

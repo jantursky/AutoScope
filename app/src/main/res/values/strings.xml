@@ -27,7 +27,8 @@
     <string name="change_added">Added: %1$s</string>
     <string name="change_removed">Removed (was %1$s)</string>
     <string name="change_arrow">%1$s \u2192 %2$s</string>
-    <string name="save">Save</string>
+    <string name="tab_role">Tab</string>
+    <string name="tab_problems">%1$s, %2$d unavailable</string>
     <string name="help_step_1">On your computer, run scripts/dev.sh. It builds, installs, grants permissions, starts the Desktop Head Unit and retries until connected.</string>
     <string name="help_step_2">On the phone, open Android Auto, tap the three-dot menu and choose Start head unit server. This cannot be automated and must be repeated after every Desktop Head Unit session.</string>
     <string name="help_step_3">Open AutoScope in the car launcher. Grant permissions from the Hardware tab or More &gt; Permissions in the car only if some are still missing.</string>

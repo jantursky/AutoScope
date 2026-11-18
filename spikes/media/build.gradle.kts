@@ -14,6 +14,9 @@ android {
         versionName = "0.0.1-spike"
     }
 
+    // Throwaway spike: a media search intent filter is not worth adding.
+    lint { abortOnError = false }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17

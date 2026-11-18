@@ -7,7 +7,6 @@ import android.os.Bundle
 import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
-import android.view.WindowInsets
 import android.widget.FrameLayout
 import android.widget.LinearLayout
 import android.widget.ScrollView
@@ -40,7 +39,7 @@ private val INTERVAL_LABELS = listOf(
 private val CLOCK = DateTimeFormatter.ofPattern("HH:mm:ss")
 
 /**
- * Phone screen: sticky connection bar and tab chips, one page below them (the car, a diagnostics group, changes,
+ * Phone screen: sticky connection bar and tab strip, one page below them (the car, a diagnostics group, changes,
  * saved reports or help). Views are built in code. Live rows are updated in place so scrolling never
  * jumps. The ticker runs only while the screen is visible.
  */
@@ -108,8 +107,9 @@ class MainActivity : Activity() {
                 container.settings.themeMode = it
                 recreate()
             },
+            onSave = ::saveSnapshot,
         )
-        tabBar = TabBarView(this, onSelect = { selectedKey = it.key; render() }, onSave = ::saveSnapshot)
+        tabBar = TabBarView(this) { selectedKey = it.key; render() }
         carPage = CarPageView(this)
         groupHost = FrameLayout(this)
         changesHolder = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
@@ -145,7 +145,7 @@ class MainActivity : Activity() {
         view.setOnApplyWindowInsetsListener { v, windowInsets ->
             val bars = systemBarInsets(windowInsets)
             v.setPadding(bars.left, bars.top, bars.right, bars.bottom)
-            WindowInsets.CONSUMED
+            consumedInsets(windowInsets)
         }
     }
 

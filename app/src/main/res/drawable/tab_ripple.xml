@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Pressed, hover and focus tint of a tab; the ripple is clipped to the tab bounds. -->
+<ripple xmlns:android="http://schemas.android.com/apk/res/android" android:color="@color/ripple_accent">
+    <item android:id="@android:id/mask">
+        <shape android:shape="rectangle"><solid android:color="#FFFFFFFF" /></shape>
+    </item>
+</ripple>

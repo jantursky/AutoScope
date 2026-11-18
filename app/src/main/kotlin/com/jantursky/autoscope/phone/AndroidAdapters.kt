@@ -12,6 +12,7 @@ import android.net.wifi.WifiManager
 import android.os.BatteryManager
 import android.os.Build
 import android.os.PowerManager
+import androidx.annotation.RequiresApi
 
 /** Platform-backed implementations of the adapter interfaces. Thin on purpose: logic lives in the sources. */
 
@@ -74,6 +75,7 @@ internal class AndroidWifiAdapter(context: Context) : WifiAdapter {
     }
 
     // API 29+: the WifiInfo of the Wi-Fi network, found through its NetworkCapabilities.
+    @RequiresApi(Build.VERSION_CODES.Q)
     @Suppress("DEPRECATION") // allNetworks is deprecated in API 31; the active network may be cellular.
     private fun transportWifiInfo(): WifiInfo? {
         val cm = connectivity ?: return null
