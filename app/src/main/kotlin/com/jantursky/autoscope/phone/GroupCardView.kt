@@ -44,7 +44,7 @@ internal class GroupCardView(
         clipToOutline = true
         layoutParams = LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
             .apply { bottomMargin = context.dp(8) }
-        addView(header())
+        addView(header(), LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, context.dp(44)))
         addView(body)
         rebuildRows()
         bind(model)
@@ -54,7 +54,6 @@ internal class GroupCardView(
 
     private fun header() = LinearLayout(context).apply {
         gravity = Gravity.CENTER_VERTICAL
-        minimumHeight = context.dp(44)
         setPadding(context.dp(16), 0, context.dp(4), 0)
         addView(title, LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
         addView(badge, LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT))

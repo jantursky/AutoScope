@@ -14,7 +14,6 @@ import android.widget.TextView
 import android.widget.Toast
 import com.jantursky.autoscope.R
 import com.jantursky.autoscope.Settings
-import com.jantursky.autoscope.ThemeMode
 import com.jantursky.autoscope.container
 import com.jantursky.autoscope.core.Group
 import com.jantursky.autoscope.core.Snapshot
@@ -34,7 +33,6 @@ private val INTERVAL_LABELS = listOf(
     R.string.interval_500, R.string.interval_1000, R.string.interval_2000,
     R.string.interval_5000, R.string.interval_10000,
 )
-private val THEME_LABELS = listOf(R.string.theme_system, R.string.theme_light, R.string.theme_dark)
 private val CLOCK = DateTimeFormatter.ofPattern("HH:mm:ss")
 
 /**
@@ -47,7 +45,6 @@ class MainActivity : Activity() {
     private lateinit var header: HeaderView
     private lateinit var liveCards: LinearLayout
     private lateinit var waiting: TextView
-    private lateinit var updated: TextView
     private lateinit var toggleAll: TextView
     private lateinit var savedList: LinearLayout
     private var cards = emptyList<GroupCardView>()
@@ -88,9 +85,16 @@ class MainActivity : Activity() {
     }
 
     private fun buildContent(): View {
-        header = HeaderView(this)
+        header = HeaderView(
+            this, INTERVAL_LABELS, closestRefreshChoice(container.settings.refreshMillis), container.settings.themeMode,
+            onInterval = { container.settings.refreshMillis = REFRESH_CHOICES_MS[it] },
+            onTheme = {
+                container.settings.themeMode = it
+                recreate()
+            },
+        )
         val column = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
-        column.addView(controlsCard())
+        column.addView(saveButton())
         column.addView(liveReportHeader())
         waiting = label(14f, R.color.text_tertiary).apply {
             setText(R.string.waiting_for_data)
@@ -134,46 +138,21 @@ class MainActivity : Activity() {
         }
     }
 
-    private fun controlsCard() = card().apply {
-        setPadding(dp(16), dp(16), dp(16), dp(16))
-        addView(
-            Button(this@MainActivity).apply {
-                setText(R.string.save_snapshot)
-                isAllCaps = false
-                textSize = 15f
-                setTextColor(color(R.color.on_accent))
-                stateListAnimator = null
-                minHeight = dp(48)
-                tappable(R.drawable.button_primary) { saveSnapshot() }
-            },
-            LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT),
-        )
-        addView(controlLabel(R.string.refresh_interval))
-        addView(
-            SegmentedControl(this@MainActivity, INTERVAL_LABELS, closestRefreshChoice(container.settings.refreshMillis)) {
-                container.settings.refreshMillis = REFRESH_CHOICES_MS[it]
-            },
-        )
-        addView(controlLabel(R.string.theme))
-        addView(
-            SegmentedControl(this@MainActivity, THEME_LABELS, container.settings.themeMode.ordinal) {
-                container.settings.themeMode = ThemeMode.entries[it]
-                recreate()
-            },
-        )
-    }
-
-    private fun controlLabel(text: Int) = label(12f, R.color.text_secondary, bold = true).apply {
-        setText(text)
-        setPadding(0, dp(16), 0, dp(8))
+    private fun saveButton() = Button(this).apply {
+        setText(R.string.save_snapshot)
+        isAllCaps = false
+        textSize = 15f
+        setTextColor(color(R.color.on_accent))
+        stateListAnimator = null
+        tappable(R.drawable.button_primary) { saveSnapshot() }
+        layoutParams = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(48)).apply { bottomMargin = dp(8) }
     }
 
     private fun liveReportHeader() = LinearLayout(this).apply {
         gravity = Gravity.CENTER_VERTICAL
         setPadding(dp(8), 0, 0, 0)
         addView(label(13f, R.color.text_secondary, bold = true).apply { setText(R.string.live_report) })
-        updated = label(12f, R.color.text_tertiary).apply { setPadding(dp(8), 0, 0, 0) }
-        addView(updated, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
+        addView(View(context), LinearLayout.LayoutParams(0, 0, 1f))
         toggleAll = label(13f, R.color.accent, bold = true).apply {
             gravity = Gravity.CENTER
             minHeight = dp(48)
@@ -193,8 +172,7 @@ class MainActivity : Activity() {
     }
 
     private fun show(snapshot: Snapshot) {
-        header.bind(connectionPill(snapshot))
-        updated.setTextIfChanged(getString(R.string.updated_at, CLOCK.format(LocalTime.now())))
+        header.bind(connectionPill(snapshot), CLOCK.format(LocalTime.now()))
         val models = groupModels(snapshot)
         waiting.visibility = if (models.isEmpty()) View.VISIBLE else View.GONE
         if (cards.map { it.group } != models.map { it.group }) {
@@ -239,14 +217,16 @@ class MainActivity : Activity() {
         reports.forEachIndexed { index, report ->
             if (index > 0) savedList.addView(divider())
             val text = savedReportLabel(report.id, now, ZoneId.systemDefault(), Locale.getDefault())
-            savedList.addView(savedRow(text) { startActivity(shareIntent(this, report, getString(R.string.share_chooser))) })
+            savedList.addView(
+                savedRow(text) { startActivity(shareIntent(this, report, getString(R.string.share_chooser))) },
+                LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(64)),
+            )
         }
     }
 
     private fun savedRow(text: SavedReportLabel, onShare: () -> Unit) = LinearLayout(this).apply {
         gravity = Gravity.CENTER_VERTICAL
-        minimumHeight = dp(56)
-        setPadding(dp(16), dp(4), dp(8), dp(4))
+        setPadding(dp(16), 0, dp(8), 0)
         val titles = LinearLayout(context).apply {
             orientation = LinearLayout.VERTICAL
             addView(label(14f, R.color.text_primary).apply { this.text = text.title })

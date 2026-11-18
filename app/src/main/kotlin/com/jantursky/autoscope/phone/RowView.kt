@@ -3,42 +3,46 @@ package com.jantursky.autoscope.phone
 import android.content.Context
 import android.content.res.ColorStateList
 import android.graphics.Typeface
-import android.view.Gravity
+import android.text.TextUtils
 import android.view.View
 import android.view.ViewGroup
 import android.widget.LinearLayout
-import android.widget.TextView
 import com.jantursky.autoscope.R
 
-private const val STACK_VALUE_CHARS = 28
-private const val STACK_LABEL_CHARS = 24
+/** Share of the row taken by the label column, so labels and values line up in every card. */
+private const val LABEL_WEIGHT = 10f
+private const val VALUE_WEIGHT = 10f
 
-/** One label and value row of a group card, updated in place by [bind]. */
+/**
+ * One label and value row of a group card, updated in place by [bind]. The label column, the status
+ * dot slot and the value column have fixed positions; a long value wraps inside its column and the
+ * label stays on the first line.
+ */
 internal class RowView(context: Context) : LinearLayout(context) {
-    private val label = context.label(14f, R.color.text_secondary)
-    private val dot = View(context).apply {
-        setBackgroundResource(R.drawable.status_dot)
-        layoutParams = LayoutParams(context.dp(8), context.dp(8)).apply { marginEnd = context.dp(8) }
+    private val label = context.label(14f, R.color.text_secondary).apply {
+        maxLines = 2
+        ellipsize = TextUtils.TruncateAt.END
+    }
+    private val dot = View(context).apply { setBackgroundResource(R.drawable.status_dot) }
+    private val dotSlot = LinearLayout(context).apply {
+        // 6dp above the dot centers it on the first 20dp text line.
+        addView(dot, LayoutParams(context.dp(8), context.dp(8)).apply { topMargin = context.dp(6) })
     }
     private val value = context.label(14f, R.color.text_primary).apply { fontFeatureSettings = "tnum" }
     private val reason = context.label(12f, R.color.text_tertiary)
-    private val valueLine = LinearLayout(context).apply {
-        gravity = Gravity.CENTER_VERTICAL
-        addView(dot)
-        addView(value, LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
-    }
     private val valueBlock = LinearLayout(context).apply {
         orientation = VERTICAL
-        addView(valueLine, LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT))
+        addView(value, LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT))
         addView(reason, LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT))
     }
-    private var stacked: Boolean? = null
 
     init {
-        minimumHeight = context.dp(44)
-        setPadding(context.dp(16), context.dp(8), context.dp(16), context.dp(8))
-        addView(label)
-        addView(valueBlock)
+        orientation = HORIZONTAL
+        // 12dp above and below one 20dp line gives a 44dp row with the text centered.
+        setPadding(context.dp(16), context.dp(12), context.dp(16), context.dp(12))
+        addView(label, LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, LABEL_WEIGHT).apply { marginEnd = context.dp(8) })
+        addView(dotSlot, LayoutParams(context.dp(16), ViewGroup.LayoutParams.WRAP_CONTENT))
+        addView(valueBlock, LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, VALUE_WEIGHT))
     }
 
     fun bind(row: RowModel) {
@@ -50,15 +54,12 @@ internal class RowView(context: Context) : LinearLayout(context) {
         value.setTypeface(null, if (calm) Typeface.ITALIC else Typeface.NORMAL)
         value.setTextIfChanged(shownValue)
         value.setTextColor(context.color(if (row.style == StatusStyle.NONE) R.color.text_primary else R.color.text_tertiary))
-        dot.visibility = when (row.style) {
-            StatusStyle.NONE, StatusStyle.CALM -> View.GONE
-            else -> View.VISIBLE
-        }
+        val showDot = statusColor(row.style) != null
+        dot.visibility = if (showDot) View.VISIBLE else View.INVISIBLE
         statusColor(row.style)?.let { dot.backgroundTintList = ColorStateList.valueOf(context.color(it)) }
         reason.visibility = if (shownReason == null) View.GONE else View.VISIBLE
         reason.setTextIfChanged(shownReason.orEmpty())
         reason.setTextColor(context.color(statusColor(row.style) ?: R.color.text_tertiary))
-        applyLayout(shownValue.length > STACK_VALUE_CHARS || row.label.length > STACK_LABEL_CHARS)
     }
 
     private fun statusColor(style: StatusStyle): Int? = when (style) {
@@ -66,30 +67,5 @@ internal class RowView(context: Context) : LinearLayout(context) {
         StatusStyle.WARNING -> R.color.status_warning
         StatusStyle.INFO -> R.color.status_info
         StatusStyle.NONE, StatusStyle.CALM -> null
-    }
-
-    /** Wide values go on their own line under the label; short ones sit right-aligned beside it. */
-    private fun applyLayout(stack: Boolean) {
-        if (stacked == stack) return
-        stacked = stack
-        val gap = context.dp(16)
-        if (stack) {
-            orientation = VERTICAL
-            label.layoutParams = LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
-            valueBlock.layoutParams = LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
-                .apply { topMargin = context.dp(4) }
-            alignValue(Gravity.START)
-        } else {
-            orientation = HORIZONTAL
-            label.layoutParams = LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 4f)
-            valueBlock.layoutParams = LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 6f).apply { marginStart = gap }
-            alignValue(Gravity.END)
-        }
-    }
-
-    private fun alignValue(horizontal: Int) {
-        valueLine.gravity = horizontal or Gravity.CENTER_VERTICAL
-        value.gravity = horizontal
-        reason.gravity = horizontal
     }
 }

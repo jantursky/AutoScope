@@ -25,5 +25,4 @@
     <string name="theme_dark">Dark</string>
     <string name="collapse_all">Collapse all</string>
     <string name="expand_all">Expand all</string>
-    <string name="updated_at">Updated %1$s</string>
 </resources>
