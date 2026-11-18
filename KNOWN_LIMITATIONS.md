@@ -12,18 +12,18 @@ What that Mazda reports: make, year, a hashed model and the screen size; display
 
 ## Library limits
 
-- **Four tabs, not six.** `TabTemplate` allows 2 to 4 tabs. Constraints share the Screen tab, phone data sits in Overview, and Touch, Visual, Sensors, Network, Permissions and Log are behind the More tab.
-- **Paging is limited by depth.** A host allows 5 templates per task. Extra pages open as new screens, so a list goes at most 4 screens deep. Rows beyond that are only in the saved report.
-- **No refresh rate number is documented.** The constraints tab says so instead of showing a measured value.
-- **Content limits.** `ConstraintManager` returns the library default when the host call fails, so that case looks like a real value.
-- **Rows are short.** A row holds two text lines of 60 characters; longer values are cut with "…". Car rows use short status words instead of full reasons; the phone and the saved report keep the full text.
-- **Live values do not tick.** Speed, memory and other continuously changing values would reset the list scroll every refresh, so the car updates them only on "Refresh values". A list also counts as a refresh only while its row count and titles stay the same.
+- `TabTemplate` allows 2 to 4 tabs, so there are four, not six. Constraints share the Screen tab, phone data sits in Overview, and Touch, Visual, Sensors, Network, Permissions and Log are behind the More tab.
+- Paging is limited by depth. A host allows 5 templates per task. Extra pages open as new screens, so a list goes at most 4 screens deep. Rows beyond that are only in the saved report.
+- No refresh rate number is documented, so the constraints tab says so instead of showing a measured value.
+- `ConstraintManager` returns the library default when the host call fails, so that case looks like a real value.
+- A row holds two text lines of 60 characters; longer values are cut with "…". Car rows use short status words instead of full reasons; the phone and the saved report keep the full text.
+- Live values do not tick. Speed, memory and other continuously changing values would reset the list scroll every refresh, so the car updates them only on "Refresh values". A list also counts as a refresh only while its row count and titles stay the same.
 
 ## Touch and surface
 
 - Whether a POI app's `MapWithContentTemplate` gets a surface and gesture callbacks on a real host is untested. Gestures need the `Action.PAN` button. If no surface arrives within 3 s the tester shows UNAVAILABLE and a tap latency test replaces it.
 - Visible and stable area are known only after the touch tester was opened, and only on Car App API 7+. The DHU did not report them.
-- **Visual** needs Car App API 7 and a map surface. On other hosts it shows a message instead. Its pane text wraps at 28 characters, and the speed arc is fixed at 0 to 200 km/h.
+- The Visual screen needs Car App API 7 and a map surface. On other hosts it shows a message instead. Its pane text wraps at 28 characters, and the speed arc is fixed at 0 to 200 km/h.
 
 ## Hardware
 

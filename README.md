@@ -6,7 +6,7 @@
 
 Android Auto diagnostics. AutoScope runs on the car screen through Android Auto and shows what the host, the screen, the touch layer and the car hardware report. A phone screen shows the same live report and saves it as JSON and text.
 
-It is a developer tool. Everything stays on the device: there is no network permission and no analytics.
+It is a developer tool. Everything stays on the device. The app has no network permission and no analytics.
 
 <p align="center">
   <img src="docs/mazda/car-overview.png" alt="AutoScope Overview tab on the car display of a Mazda CX-5" width="46%">
@@ -27,7 +27,7 @@ Then follow [Setup](#setup) for developer mode.
 
 ## What is in the car
 
-**Real cars and sideloading:** a real Android Auto host refuses a Car App Library app that was not installed from Google Play, even with "Unknown sources" on. Installed from the APK, AutoScope shows up as a media app with phone side data (Overview, Network, Permissions, Log, Mark this moment). The template UI below runs on the DHU, and in a car when the app comes from Play (checked on a Mazda CX-5). Details in [KNOWN_LIMITATIONS.md](KNOWN_LIMITATIONS.md).
+A real Android Auto host refuses a Car App Library app that was not installed from Google Play, even with "Unknown sources" on. Installed from the APK, AutoScope shows up as a media app with phone side data (Overview, Network, Permissions, Log, Mark this moment). The template UI below runs on the DHU, and in a car when the app comes from Play (checked on a Mazda CX-5). Details in [KNOWN_LIMITATIONS.md](KNOWN_LIMITATIONS.md).
 
 Car UI uses `androidx.car.app` 1.7.0 templates only, category **POI**. The library allows four tabs, so the fourth one is a menu:
 
