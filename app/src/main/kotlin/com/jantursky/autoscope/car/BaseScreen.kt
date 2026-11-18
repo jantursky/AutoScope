@@ -29,7 +29,8 @@ class SessionDeps(
 
 /**
  * Logs its lifecycle, refreshes only when the snapshot part it shows has changed, records template
- * timing and handles the row actions shared by all screens.
+ * timing and handles the row actions shared by all screens. Live values ([LiveFields]) refresh only with
+ * the template, so list views also offer [refreshNow].
  */
 abstract class BaseScreen(carContext: CarContext, protected val deps: SessionDeps, name: String) : Screen(carContext) {
 
@@ -58,11 +59,18 @@ abstract class BaseScreen(carContext: CarContext, protected val deps: SessionDep
         invalidate()
     }
 
+    /** "Refresh values": reads every source now, so the live values are current, and rebuilds the template. */
+    protected fun refreshNow() {
+        deps.container.repository.refresh()
+        refresh()
+    }
+
     /** Lists never go deeper than [MAX_LIST_DEPTH]; the fifth step of a task must not be a list. */
     protected fun canPushList(): Boolean = screenManager.stackSize < MAX_LIST_DEPTH
 
     protected open fun onAction(action: RowAction) {
         when (action) {
+            RowAction.REFRESH -> refreshNow()
             RowAction.MARK -> mark()
             RowAction.OPEN_LOG -> if (canPushList()) screenManager.push(ViewScreen(carContext, deps, CarView.LOG, 0))
             RowAction.GRANT_PERMISSIONS -> grantPermissions()
@@ -70,8 +78,8 @@ abstract class BaseScreen(carContext: CarContext, protected val deps: SessionDep
         }
     }
 
-    /** Rows of a list view, paged by the host list limit. */
-    protected fun listPage(view: CarView, snapshot: Snapshot, pageIndex: Int): Page = CarRows.page(
+    /** Rows of a list view, paged by the host list limit, each page starting with "Refresh values". */
+    protected fun listPage(view: CarView, snapshot: Snapshot, pageIndex: Int): Page = CarRows.refreshablePage(
         ViewRows.rows(view, snapshot, deps.ports.apiLevel, deps.missingPermissions()),
         deps.listLimit(),
         pageIndex,
@@ -79,8 +87,9 @@ abstract class BaseScreen(carContext: CarContext, protected val deps: SessionDep
     )
 
     /**
-     * The Touch view: the TOUCH readings (as many as the pane limit allows) and one large action. It opens
-     * the touch tester when the host can show it, otherwise it measures the row tap latency.
+     * The Touch view: the TOUCH readings (as many as the pane limit allows) and two large actions. The first
+     * opens the touch tester when the host can show it, otherwise it measures the row tap latency. The second
+     * refreshes the values, as pane rows cannot be clickable.
      */
     protected fun touchPane(snapshot: Snapshot): Pane {
         val rows = ViewRows.rows(CarView.TOUCH, snapshot, deps.ports.apiLevel, emptyList()).take(deps.paneLimit())
@@ -94,7 +103,11 @@ abstract class BaseScreen(carContext: CarContext, protected val deps: SessionDep
                 refresh()
             }.build()
         }
-        return Pane.Builder().apply { rows.forEach { addRow(Templates.paneRow(it)) } }.addAction(action).build()
+        val refresh = Action.Builder().setTitle(CarRows.REFRESH_TITLE).setOnClickListener { refreshNow() }.build()
+        return Pane.Builder().apply { rows.forEach { addRow(Templates.paneRow(it)) } }
+            .addAction(action)
+            .addAction(refresh)
+            .build()
     }
 
     private fun mark() {

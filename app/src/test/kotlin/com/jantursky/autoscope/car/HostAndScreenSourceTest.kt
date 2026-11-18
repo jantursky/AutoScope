@@ -2,6 +2,7 @@ package com.jantursky.autoscope.car
 
 import com.jantursky.autoscope.core.Status
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Test
 
 class HostAndScreenSourceTest {
@@ -12,12 +13,21 @@ class HostAndScreenSourceTest {
     }
 
     @Test
-    fun `host fields report level, library and host identity`() {
+    fun `host fields report levels and host identity`() {
         val fields = CarHostSource { fakePorts(apiLevel = 7) }.read()
 
         assertEquals("7", fields.byLabel("Car App API level (host)").value)
-        assertEquals("1.7.0", fields.byLabel("Car App Library version").value)
+        assertEquals("8", fields.byLabel("Car App API level (library latest)").value)
         assertEquals("10123", fields.byLabel("Host uid").value)
+    }
+
+    @Test
+    fun `the library version is left to the phone side so the host group lists it once`() {
+        val bound = CarHostSource { fakePorts() }.read().map { it.label }
+        val unbound = CarHostSource { null }.read().map { it.label }
+
+        assertFalse("Car App Library version" in bound)
+        assertEquals(bound, unbound)
     }
 
     @Test

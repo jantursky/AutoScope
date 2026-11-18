@@ -81,6 +81,7 @@ class TouchTesterScreen(carContext: CarContext, deps: SessionDeps) : BaseScreen(
         })
     }
 
+    /** Every TOUCH value, live counters included: following the touch events is what the tester is for. */
     override fun visible(snapshot: Snapshot): Any = snapshot.fields(Group.TOUCH)
 
     override fun build(snapshot: Snapshot): Template {

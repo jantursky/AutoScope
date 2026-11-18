@@ -8,7 +8,7 @@ import com.jantursky.autoscope.core.rowText
 import com.jantursky.autoscope.core.rowTitle
 
 /** What a row does when tapped. Rows without an action are plain readings. */
-enum class RowAction { NEXT_PAGE, MARK, OPEN_LOG, GRANT_PERMISSIONS }
+enum class RowAction { REFRESH, NEXT_PAGE, MARK, OPEN_LOG, GRANT_PERMISSIONS }
 
 /** A car list row before it becomes a template Row. A Row allows a title and at most two text lines. */
 data class UiRow(val title: String, val lines: List<String>, val action: RowAction? = null)
@@ -25,8 +25,11 @@ enum class CarView(val title: String, val groups: List<Group>) {
     LOG("Log", listOf(Group.LIFECYCLE)),
     ;
 
-    /** The part of [snapshot] this view shows; the view refreshes only when this changes. */
-    fun visible(snapshot: Snapshot): List<List<Field>> = groups.map(snapshot::fields)
+    /**
+     * The part of [snapshot] whose change refreshes this view. Live values ([LiveFields]) are left out, so
+     * the host does not scroll the list back to the top on every tick.
+     */
+    fun visible(snapshot: Snapshot): List<List<Field>> = groups.map { LiveFields.structure(it, snapshot.fields(it)) }
 
     companion object {
         val TABS = listOf(OVERVIEW, SCREEN, TOUCH, HARDWARE)
@@ -89,6 +92,29 @@ object CarRows {
         }
         return Page(pages[i] + tail, i, pages.size)
     }
+
+    /**
+     * [page] with the [REFRESH] row first, within the same [limit]. The refresh row is on every page and
+     * never changes, so a refresh keeps the row count and titles.
+     */
+    fun refreshablePage(rows: List<UiRow>, limit: Int, index: Int, canGoDeeper: Boolean): Page {
+        val page = page(rows, limit - 1, index, canGoDeeper)
+        return page.copy(rows = listOf(REFRESH) + page.rows)
+    }
+
+    /**
+     * Title of a pushed list page. The log grows, so its title leaves out the page count: a changed title
+     * would turn an explicit refresh into a new template step.
+     */
+    fun pageTitle(view: CarView, page: Page): String = when {
+        view == CarView.LOG -> if (page.index == 0) view.title else "${view.title} ${page.index + 1}"
+        page.count == 1 -> view.title
+        else -> "${view.title} ${page.index + 1}/${page.count}"
+    }
+
+    const val REFRESH_TITLE = "Refresh values"
+
+    val REFRESH = UiRow(REFRESH_TITLE, listOf("Updates timers, counters, sensors and the log"), RowAction.REFRESH)
 
     private val EMPTY = UiRow("No data", listOf("-"))
 }

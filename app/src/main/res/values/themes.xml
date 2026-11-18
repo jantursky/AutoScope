@@ -1,5 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- DayNight themes exist from API 29; API 28 stays light. -->
-    <style name="Theme.AutoScope" parent="android:Theme.DeviceDefault.Light" />
+    <!-- DayNight themes exist from API 29; API 28 stays light. Colors come from values and values-night. -->
+    <style name="Theme.AutoScope" parent="android:Theme.DeviceDefault.Light.NoActionBar">
+        <item name="android:windowBackground">@color/background</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:windowLightStatusBar">@bool/light_system_bars</item>
+        <item name="android:windowLayoutInDisplayCutoutMode">shortEdges</item>
+    </style>
 </resources>

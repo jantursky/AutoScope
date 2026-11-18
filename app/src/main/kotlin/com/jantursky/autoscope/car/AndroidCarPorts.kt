@@ -24,10 +24,6 @@ object AndroidCarPorts {
         override fun hostInfo() = carContext.hostInfo?.let { HostIdentity(it.packageName, it.uid) }
 
         override fun libraryLatestApiLevel() = CarAppApiLevels.getLatest()
-
-        // AppInfo.create reads this library resource; it is not in the library's public resources.
-        @Suppress("PrivateResource")
-        override fun libraryVersion(): String = carContext.getString(androidx.car.app.R.string.car_app_library_version)
     }
 
     @Suppress("DEPRECATION") // DisplayMetrics.scaledDensity, still the factor text is scaled with.

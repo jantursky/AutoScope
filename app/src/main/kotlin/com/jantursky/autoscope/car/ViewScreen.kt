@@ -18,8 +18,7 @@ class ViewScreen(
         val api = deps.ports.apiLevel
         if (view == CarView.TOUCH) return Templates.screenPane(view.title, touchPane(snapshot), api)
         val page = listPage(view, snapshot, pageIndex)
-        val title = if (page.count == 1) view.title else "${view.title} ${page.index + 1}/${page.count}"
-        return Templates.screenList(title, Templates.itemList(page.rows, ::onAction), api)
+        return Templates.screenList(CarRows.pageTitle(view, page), Templates.itemList(page.rows, ::onAction), api)
     }
 
     override fun onAction(action: RowAction) {

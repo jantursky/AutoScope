@@ -14,8 +14,6 @@ class FakeHost(
     }
 
     override fun libraryLatestApiLevel() = 8
-
-    override fun libraryVersion() = "1.7.0"
 }
 
 class FakeConstraints(

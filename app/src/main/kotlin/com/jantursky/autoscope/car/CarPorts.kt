@@ -21,8 +21,6 @@ interface HostPort {
 
     /** Highest Car App API level this library build implements. */
     fun libraryLatestApiLevel(): Int
-
-    fun libraryVersion(): String
 }
 
 /** Raw display values of the car screen as the CarContext resources see them. */

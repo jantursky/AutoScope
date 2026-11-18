@@ -12,9 +12,10 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
 /**
- * Calls [onChange] while the screen is started and the part of the snapshot it shows ([visible])
- * differs from what its last template showed. The repository publishes at most once per timer tick, so
- * this never asks for more than one refresh per tick.
+ * Calls [onChange] while the screen is started and the part of the snapshot that matters to it
+ * ([visible], which for list views leaves out [LiveFields]) differs from what its last template showed.
+ * The repository publishes at most once per timer tick (Settings.refreshMillis), so this never asks for
+ * more than one refresh per tick.
  */
 class SnapshotWatcher(
     private val snapshot: StateFlow<Snapshot>,
