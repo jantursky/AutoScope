@@ -30,9 +30,17 @@ fun relativeTime(then: Instant, now: Instant): String {
     }
 }
 
-/** Reason part of the id as a title ("phone-button" becomes "Phone button"). */
-private fun reportTitle(id: String): String {
+/** Slug prefixes of the "Connection: <type>" reasons that [ConnectionSnapshotter] saves, in id form (the slug is cut at 32 chars). */
+private val CONNECTION_TITLES = listOf(
+    "connection-not-connected" to "Disconnected",
+    "connection-projection" to "Connected via Android Auto",
+    "connection-native" to "Connected natively",
+)
+
+/** Reason part of the id as a title: connection reasons read as events, others as "phone-button" becomes "Phone button". */
+internal fun reportTitle(id: String): String {
     val slug = ID_PATTERN.matchEntire(id)?.groupValues?.get(2).orEmpty()
+    CONNECTION_TITLES.firstOrNull { slug.startsWith(it.first) }?.let { return it.second }
     return slug.replace('-', ' ').replaceFirstChar { it.titlecase(Locale.ROOT) }.ifEmpty { id }
 }
 

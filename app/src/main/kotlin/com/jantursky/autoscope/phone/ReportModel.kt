@@ -44,7 +44,8 @@ data class GroupModel(
 
 /** Groups in enum order, only those with fields. */
 fun groupModels(snapshot: Snapshot): List<GroupModel> = Group.entries.mapNotNull { group ->
-    val fields = snapshot.fields(group)
+    // The connection type is already shown once, as the pill in the top bar.
+    val fields = snapshot.fields(group).filterNot { group == Group.CONNECTION && it.label == CONNECTION_TYPE_LABEL }
     if (fields.isEmpty()) return@mapNotNull null
     val limit = if (group == Group.LIFECYCLE) LIFECYCLE_ROW_LIMIT else Int.MAX_VALUE
     val shown = fields.take(limit)

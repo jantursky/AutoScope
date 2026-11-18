@@ -26,16 +26,22 @@ internal fun Context.divider() = View(this).apply {
     layoutParams = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 1)
 }
 
+/** Rounded bordered card. Children are clipped to its outline so ripples keep the rounded shape. */
 internal fun Context.card() = LinearLayout(this).apply {
     orientation = LinearLayout.VERTICAL
     setBackgroundResource(R.drawable.card_background)
+    clipToOutline = true
     layoutParams = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
-        .apply { bottomMargin = dp(16) }
+        .apply { bottomMargin = dp(8) }
 }
 
-internal fun Context.sectionTitle(text: Int) = label(14f, R.color.text_secondary, bold = true).apply {
-    setText(text)
-    setPadding(dp(8), dp(8), dp(8), dp(8))
+/** Tappable view with the themed ripple, pressed, hover and focus tints, and no system focus highlight. */
+internal fun View.tappable(@androidx.annotation.DrawableRes background: Int, onClick: () -> Unit) {
+    isClickable = true
+    isFocusable = true
+    defaultFocusHighlightEnabled = false
+    setBackgroundResource(background)
+    setOnClickListener { onClick() }
 }
 
 internal fun TextView.setTextIfChanged(value: CharSequence) {

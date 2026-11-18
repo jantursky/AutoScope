@@ -2,6 +2,7 @@ package com.jantursky.autoscope.phone
 
 import android.content.Context
 import android.content.res.ColorStateList
+import android.graphics.Typeface
 import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
@@ -19,7 +20,7 @@ internal class RowView(context: Context) : LinearLayout(context) {
         setBackgroundResource(R.drawable.status_dot)
         layoutParams = LayoutParams(context.dp(8), context.dp(8)).apply { marginEnd = context.dp(8) }
     }
-    private val value = context.label(15f, R.color.text_primary)
+    private val value = context.label(14f, R.color.text_primary).apply { fontFeatureSettings = "tnum" }
     private val reason = context.label(12f, R.color.text_tertiary)
     private val valueLine = LinearLayout(context).apply {
         gravity = Gravity.CENTER_VERTICAL
@@ -34,8 +35,8 @@ internal class RowView(context: Context) : LinearLayout(context) {
     private var stacked: Boolean? = null
 
     init {
-        minimumHeight = context.dp(48)
-        setPadding(context.dp(16), context.dp(12), context.dp(16), context.dp(12))
+        minimumHeight = context.dp(44)
+        setPadding(context.dp(16), context.dp(8), context.dp(16), context.dp(8))
         addView(label)
         addView(valueBlock)
     }
@@ -46,6 +47,7 @@ internal class RowView(context: Context) : LinearLayout(context) {
         val shownValue = if (calm) row.reason ?: row.value else row.value
         val shownReason = row.reason.takeIf { !calm }
         label.setTextIfChanged(row.label)
+        value.setTypeface(null, if (calm) Typeface.ITALIC else Typeface.NORMAL)
         value.setTextIfChanged(shownValue)
         value.setTextColor(context.color(if (row.style == StatusStyle.NONE) R.color.text_primary else R.color.text_tertiary))
         dot.visibility = when (row.style) {

@@ -1,5 +1,7 @@
 package com.jantursky.autoscope.phone
 
+import android.content.res.Configuration
+import com.jantursky.autoscope.ThemeMode
 import com.jantursky.autoscope.core.Field
 import com.jantursky.autoscope.core.Group
 import com.jantursky.autoscope.core.Snapshot
@@ -87,6 +89,29 @@ class ReportModelTest {
         assertEquals("Phone button", label.title)
         assertEquals("18 Nov, 14:32:05  ·  5 min ago", label.whenText)
         assertEquals(SavedReportLabel("whatever", ""), savedReportLabel("whatever", Instant.EPOCH, ZoneId.of("UTC"), Locale.ENGLISH))
+    }
+
+    @Test fun connectionReasonsBecomeEvents() {
+        fun title(slug: String) = reportTitle("autoscope-20261118-143205-123-$slug")
+        assertEquals("Disconnected", title("connection-not-connected"))
+        assertEquals("Connected via Android Auto", title("connection-projection-android-au"))
+        assertEquals("Connected natively", title("connection-native-android-automo"))
+        assertEquals("Mark this moment", title("mark-this-moment"))
+    }
+
+    @Test fun connectionTypeRowIsOnlyInThePill() {
+        val model = groupModels(
+            snap(Group.CONNECTION to listOf(Field.ok("Connection type", "Not connected", "s"), Field.ok("Reconnects", 0, "s"))),
+        ).single()
+        assertEquals(listOf("Reconnects"), model.rows.map { it.label })
+    }
+
+    @Test fun themeModeForcesNightBits() {
+        val dayWithFlags = Configuration.UI_MODE_NIGHT_NO or Configuration.UI_MODE_TYPE_NORMAL
+        assertEquals(dayWithFlags, uiModeFor(ThemeMode.SYSTEM, dayWithFlags))
+        assertEquals(Configuration.UI_MODE_NIGHT_YES or Configuration.UI_MODE_TYPE_NORMAL, uiModeFor(ThemeMode.DARK, dayWithFlags))
+        val night = Configuration.UI_MODE_NIGHT_YES or Configuration.UI_MODE_TYPE_CAR
+        assertEquals(Configuration.UI_MODE_NIGHT_NO or Configuration.UI_MODE_TYPE_CAR, uiModeFor(ThemeMode.LIGHT, night))
     }
 
     @Test fun relativeTimes() {

@@ -8,7 +8,7 @@ enum class PillKind { CONNECTED, DISCONNECTED }
 
 data class ConnectionPill(val text: String, val kind: PillKind)
 
-private const val CONNECTION_TYPE_LABEL = "Connection type"
+internal const val CONNECTION_TYPE_LABEL = "Connection type"
 
 /** Header pill derived from the "Connection type" field, for example "Projection" or "Not connected". */
 fun connectionPill(snapshot: Snapshot): ConnectionPill {
