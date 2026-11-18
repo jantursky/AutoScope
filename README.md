@@ -21,7 +21,7 @@ Tested in a real car: a Mazda CX-5 (2017) over USB, Android Auto 18.0.664264, Ca
 
 - **Google Play:** [AutoScope on Google Play](https://play.google.com/store/apps/details?id=com.jantursky.autoscope). The public listing is not live yet; for now the app is on an internal testing track. This is the install that works in a real car.
 - **APK:** download `AutoScope-1.1.2.apk` from the [latest release](https://github.com/jantursky/AutoScope/releases/latest) and open it on the phone, or run `adb install AutoScope-1.1.2.apk`. A sideloaded build shows up in a real car as a media app only (see below) and runs the full UI on the DHU. The Play build is signed with a different key, so uninstall one before installing the other.
-- **F-Droid:** submitted ([merge request](https://gitlab.com/fdroid/fdroiddata/-/merge_requests/57998)); the store metadata is in `fastlane/`.
+- **F-Droid:** not listed yet. The first request was closed because F-Droid asks for an app that has been maintained for more than 3 months; the store metadata stays in `fastlane/` and `fdroid/` for a later request.
 
 Then follow [Setup](#setup) for developer mode.
 
