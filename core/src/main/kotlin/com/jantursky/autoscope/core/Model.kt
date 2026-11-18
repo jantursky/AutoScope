@@ -15,6 +15,7 @@ enum class Group(val title: String) {
     SCREEN("Screen"),
     CONSTRAINTS("Template constraints"),
     HARDWARE("Car hardware"),
+    PERMISSIONS("Permissions"),
     TOUCH("Touch"),
     PERFORMANCE("Performance"),
     LIFECYCLE("Lifecycle log"),
