@@ -84,44 +84,44 @@ Connect the phone, enable developer mode and "Unknown sources" as above, and loo
 
 ## Fields
 
-Every field carries a value, a source and a status: OK, UNAVAILABLE (with a reason), PERMISSION_MISSING or NOT_SUPPORTED_BY_HOST. "Tested on" is the Android Auto version the field was seen on; **not yet** means compiled and unit tested only.
+Every field carries a value, a source and a status: OK, UNAVAILABLE (with a reason), PERMISSION_MISSING or NOT_SUPPORTED_BY_HOST. The DHU column is the Android Auto version the field was seen on in the Desktop Head Unit; **not tested** means compiled and unit tested only. The Mazda CX-5 column is filled in after a drive.
 
-| Field | API | Permission | Tested on |
-| --- | --- | --- | --- |
-| Connection type, time connected, reconnects | `CarConnection.getType` | none | 18.0.664264 (DHU, projection) |
-| Car App API level | `CarContext.getCarAppApiLevel` | none | 18.0.664264 (spike, level 8) |
-| Host package, uid | `CarContext.getHostInfo` | none | not yet |
-| Car App Library version | `R.string.car_app_library_version` (not public API) | none | not yet |
-| Android Auto version name, code | `PackageManager.getPackageInfo` | `<queries>` entry (API 30+) | not yet |
-| Phone Android, SDK, manufacturer, model | `Build` | none | not yet |
-| Screen width, height, dpi, density, scaled density, dp sizes, smallest width, aspect ratio, orientation | `CarContext` resources, `DisplayMetrics`, `Configuration` | none | 18.0.664264 (DHU, 800 x 400 px) |
-| Refresh rate | `Display.getRefreshRate` (library virtual display, Android 11+) | none | not yet |
-| Visible and stable area | `SurfaceCallback.onVisibleAreaChanged`, `onStableAreaChanged` | `androidx.car.app.ACCESS_SURFACE` | DHU did not report them |
-| Dark mode, UI mode night, font scale, locale | `CarContext.isDarkMode`, `Configuration` | none | not yet |
-| List, grid, pane, place list, route list limits | `ConstraintManager.getContentLimit` | none | not yet |
-| App driven refresh | `ConstraintManager.isAppDrivenRefreshEnabled` (API 6) | none | not yet |
-| Template step limit, refresh limit | documented values, not measured | none | n/a |
-| Make, model, year | `CarInfo.fetchModel` | none on Android Auto | not yet |
-| EV connector types, fuel types | `CarInfo.fetchEnergyProfile` | `com.google.android.gms.permission.CAR_FUEL` | not yet |
-| Speed (raw, display) | `CarInfo.addSpeedListener` | `com.google.android.gms.permission.CAR_SPEED` | not yet |
-| Odometer | `CarInfo.addMileageListener` | `com.google.android.gms.permission.CAR_MILEAGE` | not yet |
-| Battery level, fuel level, range | `CarInfo.addEnergyLevelListener` | `com.google.android.gms.permission.CAR_FUEL` | not yet |
-| Toll card | `CarInfo.addTollListener` | none | not yet |
-| EV charge port | `CarInfo.addEvStatusListener` (experimental) | none documented | not yet |
-| Accelerometer, gyroscope, compass | `CarSensors` | none documented | not yet (the DHU feeds none) |
-| Car location | `CarSensors.addCarHardwareLocationListener` | `android.permission.ACCESS_FINE_LOCATION` | not yet |
-| Touch events, counters, events per second | `SurfaceCallback` via `AppManager.setSurfaceCallback`, `MapWithContentTemplate` | `ACCESS_SURFACE`, `MAP_TEMPLATES` | not yet |
-| Tap latency | `Screen.invalidate` to `onGetTemplate` | none | not yet |
-| Session to first template, invalidate to template, templates per minute | `Session`, `Screen` timing | none | not yet |
-| Java heap, native heap, process PSS | `Runtime`, `Debug` | none | not yet |
-| Granted and missing permissions | `checkSelfPermission` | none | n/a (phone) |
-| Lifecycle log | `Session`, `Screen` lifecycle, `onCarConfigurationChanged` | none | not yet |
-| Battery state, percent, temperature | `ACTION_BATTERY_CHANGED` | none | n/a (phone) |
-| Thermal status | `PowerManager.getCurrentThermalStatus` (API 29+) | none | n/a (phone) |
-| Power save mode | `PowerManager.isPowerSaveMode` | none | n/a (phone) |
-| Bluetooth state | `BluetoothAdapter.getState` | none declared | n/a (phone) |
-| Wi-Fi state, band, link speed | `WifiManager`, `WifiInfo` | `ACCESS_WIFI_STATE`, `ACCESS_NETWORK_STATE` | n/a (phone) |
-| Free memory, low memory | `ActivityManager.getMemoryInfo` | none | n/a (phone) |
+| Field | API | Permission | DHU | Mazda CX-5 |
+| --- | --- | --- | --- | --- |
+| Connection type, time connected, reconnects | `CarConnection.getType` | none | 18.0.664264 (DHU, projection) | to test |
+| Car App API level | `CarContext.getCarAppApiLevel` | none | 18.0.664264 (spike, level 8) | to test |
+| Host package, uid | `CarContext.getHostInfo` | none | not tested | to test |
+| Car App Library version | `R.string.car_app_library_version` (not public API) | none | not tested | to test |
+| Android Auto version name, code | `PackageManager.getPackageInfo` | `<queries>` entry (API 30+) | not tested | to test |
+| Phone Android, SDK, manufacturer, model | `Build` | none | not tested | to test |
+| Screen width, height, dpi, density, scaled density, dp sizes, smallest width, aspect ratio, orientation | `CarContext` resources, `DisplayMetrics`, `Configuration` | none | 18.0.664264 (DHU, 800 x 400 px) | to test |
+| Refresh rate | `Display.getRefreshRate` (library virtual display, Android 11+) | none | not tested | to test |
+| Visible and stable area | `SurfaceCallback.onVisibleAreaChanged`, `onStableAreaChanged` | `androidx.car.app.ACCESS_SURFACE` | DHU did not report them | to test |
+| Dark mode, UI mode night, font scale, locale | `CarContext.isDarkMode`, `Configuration` | none | not tested | to test |
+| List, grid, pane, place list, route list limits | `ConstraintManager.getContentLimit` | none | not tested | to test |
+| App driven refresh | `ConstraintManager.isAppDrivenRefreshEnabled` (API 6) | none | not tested | to test |
+| Template step limit, refresh limit | documented values, not measured | none | n/a | n/a |
+| Make, model, year | `CarInfo.fetchModel` | none on Android Auto | not tested | to test |
+| EV connector types, fuel types | `CarInfo.fetchEnergyProfile` | `com.google.android.gms.permission.CAR_FUEL` | not tested | to test |
+| Speed (raw, display) | `CarInfo.addSpeedListener` | `com.google.android.gms.permission.CAR_SPEED` | not tested | to test |
+| Odometer | `CarInfo.addMileageListener` | `com.google.android.gms.permission.CAR_MILEAGE` | not tested | to test |
+| Battery level, fuel level, range | `CarInfo.addEnergyLevelListener` | `com.google.android.gms.permission.CAR_FUEL` | not tested | to test |
+| Toll card | `CarInfo.addTollListener` | none | not tested | to test |
+| EV charge port | `CarInfo.addEvStatusListener` (experimental) | none documented | not tested | to test |
+| Accelerometer, gyroscope, compass | `CarSensors` | none documented | not tested (the DHU feeds none) | to test |
+| Car location | `CarSensors.addCarHardwareLocationListener` | `android.permission.ACCESS_FINE_LOCATION` | not tested | to test |
+| Touch events, counters, events per second | `SurfaceCallback` via `AppManager.setSurfaceCallback`, `MapWithContentTemplate` | `ACCESS_SURFACE`, `MAP_TEMPLATES` | not tested | to test |
+| Tap latency | `Screen.invalidate` to `onGetTemplate` | none | not tested | to test |
+| Session to first template, invalidate to template, templates per minute | `Session`, `Screen` timing | none | not tested | to test |
+| Java heap, native heap, process PSS | `Runtime`, `Debug` | none | not tested | to test |
+| Granted and missing permissions | `checkSelfPermission` | none | n/a (phone) | n/a |
+| Lifecycle log | `Session`, `Screen` lifecycle, `onCarConfigurationChanged` | none | not tested | to test |
+| Battery state, percent, temperature | `ACTION_BATTERY_CHANGED` | none | n/a (phone) | n/a |
+| Thermal status | `PowerManager.getCurrentThermalStatus` (API 29+) | none | n/a (phone) | n/a |
+| Power save mode | `PowerManager.isPowerSaveMode` | none | n/a (phone) | n/a |
+| Bluetooth state | `BluetoothAdapter.getState` | none declared | n/a (phone) | n/a |
+| Wi-Fi state, band, link speed | `WifiManager`, `WifiInfo` | `ACCESS_WIFI_STATE`, `ACCESS_NETWORK_STATE` | n/a (phone) | n/a |
+| Free memory, low memory | `ActivityManager.getMemoryInfo` | none | n/a (phone) | n/a |
 
 ## Layout
 
