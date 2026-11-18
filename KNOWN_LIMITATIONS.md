@@ -1,10 +1,14 @@
 # Known limitations
 
-Tested so far: the Step 0 spikes and an earlier build of the app on a DHU (Android 15 emulator, Android Auto 18.0.664264, Car App API level 8), with "Unknown sources" on and off. The latest car-side changes (dark Visual surface, shorter rows, car drawing, "Refresh values") were not rechecked there. Nothing has run in a real car.
+Tested so far: the Step 0 spikes, an earlier build of the app on a DHU (Android 15 emulator, Android Auto 18.0.664264, Car App API level 8) and the 1.1.0 build in a real car, a 2017 Mazda CX-5 over USB (Android Auto 18.0.664264, Car App API level 8, parked) installed from the Google Play internal testing track. Not tried in a car: driving, wireless projection, other cars and other Android Auto versions, touch events on the car screen.
 
 ## Real cars: sideloaded installs run as a media app only
 
-Tested on a Mazda CX-5 over USB (Android Auto 18.0.664264). With "Unknown sources" on, the car's host validator denies the Car App Library part of AutoScope (`CAR.VALIDATOR: Package DENIED; failed all other checks`, Play service: "app owners empty"), so the template tabs, touch tester, Visual dashboard, screen info and car hardware data never start. The DHU does not enforce this. A sideloaded media app is accepted, so AutoScope also ships a media entry point: Overview, Network, Permissions, Log and "Mark this moment" as browse rows, with phone side data only. The phone's Car tab then says "Media only". Car data on a real car needs the app installed from Google Play (for example an internal testing track), which was not tried.
+With a sideloaded APK and "Unknown sources" on, the Mazda's host validator denies the Car App Library part of AutoScope (`CAR.VALIDATOR: Package DENIED; failed all other checks`, Play service: "app owners empty"), so the template tabs never start. The DHU does not enforce this. A sideloaded media app is accepted, so AutoScope also ships a media entry point: Overview, Network, Permissions, Log and "Mark this moment" as browse rows, with phone side data only. The phone's Car tab then says "Media only".
+
+Installed from Google Play (internal testing), the full template UI starts on the same car: the four tabs, the touch tester screen and the Visual dashboard open and show real values. The Play build is signed with Google's key, so a sideloaded build has to be uninstalled first.
+
+What that Mazda reports: make, year, a hashed model and the screen size; display speed (0.0 while parked). It reports no value for odometer, fuel, battery, range, toll card or EV charge port, and "not implemented" for accelerometer, gyroscope, compass, car location, fuel types and EV connectors. The in-car "Grant permissions" dialog said it was not available while driving, so the permissions were granted with `adb shell pm grant`. Visible and stable area showed no value until a map screen was opened and were not checked afterwards.
 
 ## Library limits
 
@@ -51,5 +55,5 @@ Tested on a Mazda CX-5 over USB (Android Auto 18.0.664264). With "Unknown source
 
 ## Distribution
 
-- The host validator accepts any host (`ALLOW_ALL_HOSTS_VALIDATOR`). That is fine for a sideloaded personal tool and must not ship to Google Play.
+- The host validator accepts any host (`ALLOW_ALL_HOSTS_VALIDATOR`), also in the Play internal testing build. That is fine for a diagnostic tool on a tester's phone; a public Play release should replace it with an allowlist of known hosts.
 - IOT is not used: it is experimental in the library. If only a media app launches on some real car, the Step 0 spike B shows the fallback, which would lose the touch tester, surface data and template limits.

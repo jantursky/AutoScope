@@ -6,19 +6,28 @@
 
 Android Auto diagnostics. AutoScope runs on the car screen through Android Auto and shows what the host, the screen, the touch layer and the car hardware report. A phone screen shows the same live report and saves it as JSON and text.
 
-It is a developer tool for personal use, installed outside Google Play. Everything stays on the device: there is no network permission and no analytics.
+It is a developer tool. Everything stays on the device: there is no network permission and no analytics.
+
+<p align="center">
+  <img src="docs/mazda/car-overview.png" alt="AutoScope Overview tab on the car display of a Mazda CX-5" width="46%">
+  <img src="docs/mazda/car-hardware.png" alt="AutoScope Hardware tab on the car display" width="46%">
+</p>
 
 ## Status
 
-Built with `./gradlew assembleDebug`, with JVM unit tests for the data layer and the phone models. An earlier build ran on the Desktop Head Unit (DHU): the four tabs, the touch tester and the Visual dashboard opened. Later changes (dark Visual surface, shorter rows, car drawing, "Refresh values") are not rechecked there, and nothing has run in a real car. See [KNOWN_LIMITATIONS.md](KNOWN_LIMITATIONS.md) and [SPIKE.md](SPIKE.md).
+Tested in a real car: a Mazda CX-5 (2017) over USB, Android Auto 18.0.664264, Car App API level 8, with AutoScope installed from Google Play (internal testing). The four tabs, the touch tester and the Visual dashboard open and show real values; the Mazda column in [Fields](#fields) lists what the car reports. Odometer, fuel and battery come back empty and the motion sensors are "not implemented" on this car. The DHU (Desktop Head Unit) runs the same UI. Built with `./gradlew assembleDebug`, with JVM unit tests for the data layer and the phone models. See [KNOWN_LIMITATIONS.md](KNOWN_LIMITATIONS.md) and [SPIKE.md](SPIKE.md).
 
 ## Install
 
-Download `AutoScope-1.1.0.apk` from the [latest release](https://github.com/jantursky/AutoScope/releases/latest) and open it on the phone, or run `adb install AutoScope-1.1.0.apk`. Then follow [Setup](#setup) for developer mode and "Unknown sources". F-Droid is planned; the store metadata is in `fastlane/`.
+- **Google Play:** [AutoScope on Google Play](https://play.google.com/store/apps/details?id=com.jantursky.autoscope). The public listing is not live yet; for now the app is on an internal testing track. This is the install that works in a real car.
+- **APK:** download `AutoScope-1.1.0.apk` from the [latest release](https://github.com/jantursky/AutoScope/releases/latest) and open it on the phone, or run `adb install AutoScope-1.1.0.apk`. A sideloaded build shows up in a real car as a media app only (see below) and runs the full UI on the DHU. The Play build is signed with a different key, so uninstall one before installing the other.
+- **F-Droid:** submitted ([merge request](https://gitlab.com/fdroid/fdroiddata/-/merge_requests/57998)); the store metadata is in `fastlane/`.
+
+Then follow [Setup](#setup) for developer mode.
 
 ## What is in the car
 
-**Real cars and sideloading:** a real Android Auto host refuses a Car App Library app that was not installed from Google Play, even with "Unknown sources" on. Installed from the APK, AutoScope shows up as a media app with phone side data (Overview, Network, Permissions, Log, Mark this moment). The template UI below runs on the DHU, and in a car only if the app comes from Play. Details in [KNOWN_LIMITATIONS.md](KNOWN_LIMITATIONS.md).
+**Real cars and sideloading:** a real Android Auto host refuses a Car App Library app that was not installed from Google Play, even with "Unknown sources" on. Installed from the APK, AutoScope shows up as a media app with phone side data (Overview, Network, Permissions, Log, Mark this moment). The template UI below runs on the DHU, and in a car when the app comes from Play (checked on a Mazda CX-5). Details in [KNOWN_LIMITATIONS.md](KNOWN_LIMITATIONS.md).
 
 Car UI uses `androidx.car.app` 1.7.0 templates only, category **POI**. The library allows four tabs, so the fourth one is a menu:
 
@@ -36,6 +45,17 @@ The rows behind More:
 - **Sensors**, **Network**, **Permissions** and **Log** are plain lists.
 
 On hosts below Car App API level 6 a list menu replaces the tabs. Lists refresh on a timer (default 1 s, 0.5 to 10 s, set on the phone) and only when a stable value changed. Values that change all the time, like speed or memory, update when you pick "Refresh values", so the list never jumps back to the top.
+
+### In a Mazda CX-5
+
+Screenshots of the car display (800 x 480), taken from Android Auto's own video capture, with the model identifier hidden. A [47 second video](docs/mazda/mazda-car-screen.mp4) walks through the tabs.
+
+| | |
+| --- | --- |
+| ![Overview](docs/mazda/car-overview.png) | ![Screen](docs/mazda/car-screen.png) |
+| ![Template constraints](docs/mazda/car-constraints.png) | ![Hardware](docs/mazda/car-hardware-values.png) |
+| ![Touch tester](docs/mazda/car-touch-tester.png) | ![Visual](docs/mazda/car-visual.png) |
+| ![Sensors](docs/mazda/car-sensors.png) | ![Permissions](docs/mazda/car-permissions.png) |
 
 ## What is on the phone
 
@@ -78,7 +98,11 @@ The Permissions view in the car and the Permissions tab on the phone list what i
 
 ### Real car
 
-Connect the phone, enable developer mode and "Unknown sources" as above, and look for AutoScope in the car's app launcher. If it does not show up, check the launcher customisation in Android Auto settings. Wired and wireless projection both work in principle; the Wi-Fi fields on the phone matter most for wireless.
+1. Install AutoScope from Google Play (an APK install only gives the media entry point).
+2. Connect the phone. Wired and wireless projection both work in principle; the Wi-Fi fields on the phone matter most for wireless. Open AutoScope from the car's app launcher.
+3. Grant the car permissions from the computer with `adb shell pm grant` (see above). The in-car "Grant permissions" dialog said it was not available while driving on the Mazda, so adb was the way.
+
+If AutoScope does not show up in the launcher, check the launcher customisation in Android Auto settings.
 
 ## Reports
 
@@ -86,38 +110,38 @@ Connect the phone, enable developer mode and "Unknown sources" as above, and loo
 
 ## Fields
 
-Every field carries a value, a source and a status: OK, UNAVAILABLE (with a reason), PERMISSION_MISSING or NOT_SUPPORTED_BY_HOST. The DHU column is the Android Auto version the field was seen on in the Desktop Head Unit; **not tested** means compiled and unit tested only. The Mazda CX-5 column is filled in after a drive.
+Every field carries a value, a source and a status: OK, UNAVAILABLE (with a reason), PERMISSION_MISSING or NOT_SUPPORTED_BY_HOST. The DHU column is the Android Auto version the field was seen on in the Desktop Head Unit; **not tested** means compiled and unit tested only. The Mazda CX-5 column is what a 2017 Mazda CX-5 reported over USB, Android Auto 18.0.664264, Car App API level 8, parked.
 
 | Field | API | Permission | DHU | Mazda CX-5 |
 | --- | --- | --- | --- | --- |
-| Connection type, time connected, reconnects | `CarConnection.getType` | none | 18.0.664264 (DHU, projection) | to test |
-| Car App API level | `CarContext.getCarAppApiLevel` | none | 18.0.664264 (spike, level 8) | to test |
-| Host package, uid | `CarContext.getHostInfo` | none | not tested | to test |
-| Car App Library version | `R.string.car_app_library_version` (not public API) | none | not tested | to test |
-| Android Auto version name, code | `PackageManager.getPackageInfo` | `<queries>` entry (API 30+) | not tested | to test |
-| Phone Android, SDK, manufacturer, model | `Build` | none | not tested | to test |
-| Screen width, height, dpi, density, scaled density, dp sizes, smallest width, aspect ratio, orientation | `CarContext` resources, `DisplayMetrics`, `Configuration` | none | 18.0.664264 (DHU, 800 x 400 px) | to test |
-| Refresh rate | `Display.getRefreshRate` (library virtual display, Android 11+) | none | not tested | to test |
-| Visible and stable area | `SurfaceCallback.onVisibleAreaChanged`, `onStableAreaChanged` | `androidx.car.app.ACCESS_SURFACE` | DHU did not report them | to test |
-| Dark mode, UI mode night, font scale, locale | `CarContext.isDarkMode`, `Configuration` | none | not tested | to test |
-| List, grid, pane, place list, route list limits | `ConstraintManager.getContentLimit` | none | not tested | to test |
-| App driven refresh | `ConstraintManager.isAppDrivenRefreshEnabled` (API 6) | none | not tested | to test |
+| Connection type, time connected, reconnects | `CarConnection.getType` | none | 18.0.664264 (DHU, projection) | OK, projection over USB |
+| Car App API level | `CarContext.getCarAppApiLevel` | none | 18.0.664264 (spike, level 8) | OK, level 8 (host) |
+| Host package, uid | `CarContext.getHostInfo` | none | not tested | OK, `com.google.android.projection.gearhead`, uid 10225 |
+| Car App Library version | `R.string.car_app_library_version` (not public API) | none | not tested | OK, 1.7.0 |
+| Android Auto version name, code | `PackageManager.getPackageInfo` | `<queries>` entry (API 30+) | not tested | OK, 18.0.664264-release, 180664264 |
+| Phone Android, SDK, manufacturer, model | `Build` | none | not tested | OK (phone: Android 15, API 35) |
+| Screen width, height, dpi, density, scaled density, dp sizes, smallest width, aspect ratio, orientation | `CarContext` resources, `DisplayMetrics`, `Configuration` | none | 18.0.664264 (DHU, 800 x 400 px) | OK, 854 x 409 px, 969 x 464 dp, 141 dpi, density 0.88, 2.09:1, landscape |
+| Refresh rate | `Display.getRefreshRate` (library virtual display, Android 11+) | none | not tested | OK, 60 Hz |
+| Visible and stable area | `SurfaceCallback.onVisibleAreaChanged`, `onStableAreaChanged` | `androidx.car.app.ACCESS_SURFACE` | DHU did not report them | no value before a map screen was opened; not rechecked after |
+| Dark mode, UI mode night, font scale, locale | `CarContext.isDarkMode`, `Configuration` | none | not tested | OK, dark mode false, UI night no, font scale 1.0, locale sk-SK,en-US |
+| List, grid, pane, place list, route list limits | `ConstraintManager.getContentLimit` | none | not tested | OK, list 1000, grid 1000, place list 1000, route list 3, pane 4 |
+| App driven refresh | `ConstraintManager.isAppDrivenRefreshEnabled` (API 6) | none | not tested | OK, true |
 | Template step limit, refresh limit | documented values, not measured | none | n/a | n/a |
-| Make, model, year | `CarInfo.fetchModel` | none on Android Auto | not tested | to test |
-| EV connector types, fuel types | `CarInfo.fetchEnergyProfile` | `com.google.android.gms.permission.CAR_FUEL` | not tested | to test |
-| Speed (raw, display) | `CarInfo.addSpeedListener` | `com.google.android.gms.permission.CAR_SPEED` | not tested | to test |
-| Odometer | `CarInfo.addMileageListener` | `com.google.android.gms.permission.CAR_MILEAGE` | not tested | to test |
-| Battery level, fuel level, range | `CarInfo.addEnergyLevelListener` | `com.google.android.gms.permission.CAR_FUEL` | not tested | to test |
-| Toll card | `CarInfo.addTollListener` | none | not tested | to test |
-| EV charge port | `CarInfo.addEvStatusListener` (experimental) | none documented | not tested | to test |
-| Accelerometer, gyroscope, compass | `CarSensors` | none documented | not tested (the DHU feeds none) | to test |
-| Car location | `CarSensors.addCarHardwareLocationListener` | `android.permission.ACCESS_FINE_LOCATION` | not tested | to test |
-| Touch events, counters, events per second | `SurfaceCallback` via `AppManager.setSurfaceCallback`, `MapWithContentTemplate` | `ACCESS_SURFACE`, `MAP_TEMPLATES` | not tested | to test |
-| Tap latency | `Screen.invalidate` to `onGetTemplate` | none | not tested | to test |
-| Session to first template, invalidate to template, templates per minute | `Session`, `Screen` timing | none | not tested | to test |
-| Java heap, native heap, process PSS | `Runtime`, `Debug` | none | not tested | to test |
+| Make, model, year | `CarInfo.fetchModel` | none on Android Auto | not tested | OK, Mazda, 2017; model is a 32 character hash |
+| EV connector types, fuel types | `CarInfo.fetchEnergyProfile` | `com.google.android.gms.permission.CAR_FUEL` | not tested | not implemented by this car/host |
+| Speed (raw, display) | `CarInfo.addSpeedListener` | `com.google.android.gms.permission.CAR_SPEED` | not tested | raw: not implemented; display: 0.0 km/h (OK, parked); unit: not implemented |
+| Odometer | `CarInfo.addMileageListener` | `com.google.android.gms.permission.CAR_MILEAGE` | not tested | no value (`STATUS_UNKNOWN`) |
+| Battery level, fuel level, range | `CarInfo.addEnergyLevelListener` | `com.google.android.gms.permission.CAR_FUEL` | not tested | no value (`STATUS_UNKNOWN`) |
+| Toll card | `CarInfo.addTollListener` | none | not tested | no value (`STATUS_UNKNOWN`) |
+| EV charge port | `CarInfo.addEvStatusListener` (experimental) | none documented | not tested | no value (`STATUS_UNKNOWN`) |
+| Accelerometer, gyroscope, compass | `CarSensors` | none documented | not tested (the DHU feeds none) | not implemented by this car/host |
+| Car location | `CarSensors.addCarHardwareLocationListener` | `android.permission.ACCESS_FINE_LOCATION` | not tested | not implemented by this car/host |
+| Touch events, counters, events per second | `SurfaceCallback` via `AppManager.setSurfaceCallback`, `MapWithContentTemplate` | `ACCESS_SURFACE`, `MAP_TEMPLATES` | not tested | surface 854 x 409 at 141 dpi OK; touch events not tried |
+| Tap latency | `Screen.invalidate` to `onGetTemplate` | none | not tested | not run (the touch tester had a surface) |
+| Session to first template, invalidate to template, templates per minute | `Session`, `Screen` timing | none | not tested | OK, 108 ms, 2 ms, 1 |
+| Java heap, native heap, process PSS | `Runtime`, `Debug` | none | not tested | OK, 9 of 256 MiB, 33 MiB, 43 MiB |
 | Granted and missing permissions | `checkSelfPermission` | none | n/a (phone) | n/a |
-| Lifecycle log | `Session`, `Screen` lifecycle, `onCarConfigurationChanged` | none | not tested | to test |
+| Lifecycle log | `Session`, `Screen` lifecycle, `onCarConfigurationChanged` | none | not tested | OK |
 | Battery state, percent, temperature | `ACTION_BATTERY_CHANGED` | none | n/a (phone) | n/a |
 | Thermal status | `PowerManager.getCurrentThermalStatus` (API 29+) | none | n/a (phone) | n/a |
 | Power save mode | `PowerManager.isPowerSaveMode` | none | n/a (phone) | n/a |
