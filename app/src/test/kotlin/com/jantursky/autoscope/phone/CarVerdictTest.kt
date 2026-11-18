@@ -31,6 +31,13 @@ class CarVerdictTest {
         )
     }
 
+    @Test fun connectedWithoutACarSessionIsMediaOnly() {
+        val hardware = listOf(Field.unavailable("Make", "s", NO_CAR_SESSION), Field.unavailable("Speed", "s", NO_CAR_SESSION))
+        val verdict = carVerdict(snapshot(hardware = hardware), CarTelemetry.EMPTY)
+        assertEquals("Media only", verdict.word)
+        assertEquals(Tone.IDLE, verdict.tone)
+    }
+
     @Test fun noSessionIsCalmGreyWithoutRows() {
         val verdict = carVerdict(Snapshot.EMPTY, CarTelemetry.EMPTY)
         assertEquals("No car session", verdict.word)

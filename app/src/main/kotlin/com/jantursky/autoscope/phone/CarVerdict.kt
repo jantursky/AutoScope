@@ -41,9 +41,13 @@ fun carVerdict(snapshot: Snapshot, telemetry: CarTelemetry): CarVerdict {
     val connected = link != LinkKind.NONE
     val missing = if (connected) missingValues(telemetry) else emptyList()
     val touchProblem = connected && touch != null && touch.status == Status.UNAVAILABLE && touch.reason != NO_CAR_SESSION
+    // Connected, but the car-app side never started: the host only runs AutoScope as a media app (a sideloaded
+    // Car App Library app is refused by real cars), so no car value can exist.
+    val mediaOnly = connected && hardware.isNotEmpty() && hardware.all { it.reason == NO_CAR_SESSION }
     val problem = touchProblem || missing.any { it.style == StatusStyle.WARNING }
     val (word, tone, summary) = when {
         !connected -> Triple("No car session", Tone.IDLE, "Connect to Android Auto to check this car")
+        mediaOnly -> Triple("Media only", Tone.IDLE, "Car data needs the car app, which this car does not start")
         problem -> Triple("Partly working", Tone.WARNING, "Some values need attention")
         else -> Triple("Ready", Tone.GOOD, "No problems found")
     }

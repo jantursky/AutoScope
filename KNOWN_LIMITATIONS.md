@@ -2,6 +2,10 @@
 
 Tested so far: the Step 0 spikes and an earlier build of the app on a DHU (Android 15 emulator, Android Auto 18.0.664264, Car App API level 8), with "Unknown sources" on and off. The latest car-side changes (dark Visual surface, shorter rows, car drawing, "Refresh values") were not rechecked there. Nothing has run in a real car.
 
+## Real cars: sideloaded installs run as a media app only
+
+Tested on a Mazda CX-5 over USB (Android Auto 18.0.664264). With "Unknown sources" on, the car's host validator denies the Car App Library part of AutoScope (`CAR.VALIDATOR: Package DENIED; failed all other checks`, Play service: "app owners empty"), so the template tabs, touch tester, Visual dashboard, screen info and car hardware data never start. The DHU does not enforce this. A sideloaded media app is accepted, so AutoScope also ships a media entry point: Overview, Network, Permissions, Log and "Mark this moment" as browse rows, with phone side data only. The phone's Car tab then says "Media only". Car data on a real car needs the app installed from Google Play (for example an internal testing track), which was not tried.
+
 ## Library limits
 
 - **Four tabs, not six.** `TabTemplate` allows 2 to 4 tabs. Constraints share the Screen tab, phone data sits in Overview, and Touch, Visual, Sensors, Network, Permissions and Log are behind the More tab.

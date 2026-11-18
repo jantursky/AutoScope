@@ -18,6 +18,8 @@ Download `AutoScope-1.0.0.apk` from the [latest release](https://github.com/jant
 
 ## What is in the car
 
+**Real cars and sideloading:** a real Android Auto host refuses a Car App Library app that was not installed from Google Play, even with "Unknown sources" on. Installed from the APK, AutoScope shows up as a media app with phone side data (Overview, Network, Permissions, Log, Mark this moment). The template UI below runs on the DHU, and in a car only if the app comes from Play. Details in [KNOWN_LIMITATIONS.md](KNOWN_LIMITATIONS.md).
+
 Car UI uses `androidx.car.app` 1.7.0 templates only, category **POI**. The library allows four tabs, so the fourth one is a menu:
 
 | Tab | Content |
