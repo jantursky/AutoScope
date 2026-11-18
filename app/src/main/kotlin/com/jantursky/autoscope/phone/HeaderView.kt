@@ -44,7 +44,7 @@ internal class HeaderView(
             setPadding(context.dp(16), 0, context.dp(8), 0)
             addView(pill, LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT))
             addView(updated, LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f).apply { marginStart = context.dp(12) })
-            addView(intervalButton, LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, context.dp(48)))
+            addView(intervalButton, LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, context.dp(48)).apply { marginEnd = context.dp(4) })
             addView(themeButton, LayoutParams(context.dp(48), context.dp(48)))
         }
         addView(bar)
@@ -56,8 +56,7 @@ internal class HeaderView(
 
     private fun setUpIntervalButton() = intervalButton.apply {
         gravity = Gravity.CENTER_VERTICAL
-        setPadding(context.dp(12), 0, context.dp(8), 0)
-        compoundDrawablePadding = context.dp(2)
+        compoundDrawablePadding = context.dp(4)
         context.getDrawable(R.drawable.ic_chevron)?.mutate()?.let {
             it.setBounds(0, 0, context.dp(16), context.dp(16))
             setCompoundDrawablesRelative(null, null, it, null)
@@ -71,6 +70,8 @@ internal class HeaderView(
                 onInterval(it)
             }
         }
+        // After tappable(): setting a background resets the padding to the drawable's own.
+        setPadding(context.dp(16), 0, context.dp(12), 0)
     }
 
     private fun setUpThemeButton() = themeButton.apply {
