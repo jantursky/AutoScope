@@ -55,5 +55,5 @@ What that Mazda reports: make, year, a hashed model and the screen size; display
 
 ## Distribution
 
-- The host validator accepts any host (`ALLOW_ALL_HOSTS_VALIDATOR`), also in the Play internal testing build. That is fine for a diagnostic tool on a tester's phone; a public Play release should replace it with an allowlist of known hosts.
+- Release builds accept only the Android Auto host (`com.google.android.projection.gearhead`), checked by two signing certificate digests read from an installed Android Auto APK (`res/values/hosts_allowlist.xml`). An Android Auto build signed with another key would be refused. Debuggable builds accept any host.
 - IOT is not used: it is experimental in the library. If only a media app launches on some real car, the Step 0 spike B shows the fallback, which would lose the touch tester, surface data and template limits.
