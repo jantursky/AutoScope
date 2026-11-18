@@ -32,10 +32,6 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 
 private const val STATE_TAB = "selected_tab"
-private val INTERVAL_LABELS = listOf(
-    R.string.interval_500, R.string.interval_1000, R.string.interval_2000,
-    R.string.interval_5000, R.string.interval_10000,
-)
 private val CLOCK = DateTimeFormatter.ofPattern("HH:mm:ss")
 
 /**
@@ -100,15 +96,16 @@ class MainActivity : Activity() {
     }
 
     private fun buildContent(): View {
-        header = HeaderView(
-            this, INTERVAL_LABELS, closestRefreshChoice(container.settings.refreshMillis), container.settings.themeMode,
-            onInterval = { container.settings.refreshMillis = REFRESH_CHOICES_MS[it] },
-            onTheme = {
-                container.settings.themeMode = it
-                recreate()
-            },
-            onSave = ::saveSnapshot,
-        )
+        header = HeaderView(this, container.settings) { action ->
+            when (action) {
+                MenuAction.Save -> saveSnapshot()
+                is MenuAction.Interval -> container.settings.refreshMillis = action.millis
+                is MenuAction.Theme -> {
+                    container.settings.themeMode = action.mode
+                    recreate()
+                }
+            }
+        }
         tabBar = TabBarView(this) { selectedKey = it.key; render() }
         carPage = CarPageView(this)
         groupHost = FrameLayout(this)

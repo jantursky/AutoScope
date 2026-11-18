@@ -27,6 +27,8 @@
     <string name="change_added">Added: %1$s</string>
     <string name="change_removed">Removed (was %1$s)</string>
     <string name="change_arrow">%1$s \u2192 %2$s</string>
+    <string name="menu">Menu</string>
+    <string name="snapshot">Snapshot</string>
     <string name="tab_role">Tab</string>
     <string name="tab_problems">%1$s, %2$d unavailable</string>
     <string name="help_step_1">On your computer, run scripts/dev.sh. It builds, installs, grants permissions, starts the Desktop Head Unit and retries until connected.</string>
