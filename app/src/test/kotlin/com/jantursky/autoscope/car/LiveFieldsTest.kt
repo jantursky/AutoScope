@@ -109,8 +109,8 @@ class LiveFieldsTest {
 
     @Test
     fun `list pages start with the refresh row and keep count and titles across refreshes`() {
-        val before = ViewRows.rows(CarView.OVERVIEW, overview("1 s", "10 MiB"), 8, emptyList())
-        val after = ViewRows.rows(CarView.OVERVIEW, overview("2 s", "11 MiB", thermal = "light"), 8, emptyList())
+        val before = ViewRows.rows(CarView.OVERVIEW, overview("1 s", "10 MiB"), RowContext(8, emptyList(), null))
+        val after = ViewRows.rows(CarView.OVERVIEW, overview("2 s", "11 MiB", thermal = "light"), RowContext(8, emptyList(), null))
 
         for (index in 0..1) {
             val first = CarRows.refreshablePage(before, limit = 6, index = index, canGoDeeper = true)

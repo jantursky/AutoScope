@@ -1,40 +1,23 @@
 package com.jantursky.autoscope.car
 
 import com.jantursky.autoscope.core.Field
-import com.jantursky.autoscope.core.Group
-import com.jantursky.autoscope.core.Snapshot
 import com.jantursky.autoscope.core.paginate
 import com.jantursky.autoscope.core.rowText
 import com.jantursky.autoscope.core.rowTitle
 
 /** What a row does when tapped. Rows without an action are plain readings. */
-enum class RowAction { REFRESH, NEXT_PAGE, MARK, OPEN_LOG, GRANT_PERMISSIONS }
+sealed interface RowAction {
+    data object Refresh : RowAction
+    data object NextPage : RowAction
+    data object Mark : RowAction
+    data object GrantPermissions : RowAction
+
+    /** Pushes the screen of [view]; the rows of the More tab. */
+    data class Open(val view: CarView) : RowAction
+}
 
 /** A car list row before it becomes a template Row. A Row allows a title and at most two text lines. */
 data class UiRow(val title: String, val lines: List<String>, val action: RowAction? = null)
-
-/**
- * The car views. TabTemplate allows at most four tabs (TabsConstraints in 1.7.0), so the six areas share
- * four views: Screen also shows the constraints and Overview links to the log.
- */
-enum class CarView(val title: String, val groups: List<Group>) {
-    OVERVIEW("Overview", listOf(Group.CONNECTION, Group.HOST, Group.PHONE, Group.PERFORMANCE)),
-    SCREEN("Screen", listOf(Group.SCREEN, Group.CONSTRAINTS)),
-    TOUCH("Touch", listOf(Group.TOUCH)),
-    HARDWARE("Hardware", listOf(Group.HARDWARE)),
-    LOG("Log", listOf(Group.LIFECYCLE)),
-    ;
-
-    /**
-     * The part of [snapshot] whose change refreshes this view. Live values ([LiveFields]) are left out, so
-     * the host does not scroll the list back to the top on every tick.
-     */
-    fun visible(snapshot: Snapshot): List<List<Field>> = groups.map { LiveFields.structure(it, snapshot.fields(it)) }
-
-    companion object {
-        val TABS = listOf(OVERVIEW, SCREEN, TOUCH, HARDWARE)
-    }
-}
 
 data class Page(val rows: List<UiRow>, val index: Int, val count: Int)
 
@@ -87,7 +70,7 @@ object CarRows {
         val shown = rows.size - pages.drop(i + 1).sumOf { it.size }
         val tail = when {
             i == pages.lastIndex -> emptyList()
-            canGoDeeper -> listOf(UiRow("Next page", listOf("Page ${i + 2} of ${pages.size}"), RowAction.NEXT_PAGE))
+            canGoDeeper -> listOf(UiRow("Next page", listOf("Page ${i + 2} of ${pages.size}"), RowAction.NextPage))
             else -> listOf(UiRow("More rows", listOf("${rows.size - shown} more in the saved report (screen depth limit)")))
         }
         return Page(pages[i] + tail, i, pages.size)
@@ -114,7 +97,7 @@ object CarRows {
 
     const val REFRESH_TITLE = "Refresh values"
 
-    val REFRESH = UiRow(REFRESH_TITLE, listOf("Updates timers, counters, sensors and the log"), RowAction.REFRESH)
+    val REFRESH = UiRow(REFRESH_TITLE, listOf("Updates timers, counters, sensors and the log"), RowAction.Refresh)
 
     private val EMPTY = UiRow("No data", listOf("-"))
 }

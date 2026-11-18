@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 32dp visible chip inside a 40dp row. Selected: accent tint. Others: surface with a hairline. -->
+<inset xmlns:android="http://schemas.android.com/apk/res/android"
+    android:insetTop="4dp" android:insetBottom="4dp">
+    <ripple android:color="@color/ripple_accent">
+        <item>
+            <selector>
+                <item android:state_selected="true">
+                    <shape android:shape="rectangle">
+                        <solid android:color="@color/accent_soft" />
+                        <corners android:radius="16dp" />
+                    </shape>
+                </item>
+                <item>
+                    <shape android:shape="rectangle">
+                        <solid android:color="@color/surface" />
+                        <stroke android:width="1dp" android:color="@color/divider" />
+                        <corners android:radius="16dp" />
+                    </shape>
+                </item>
+            </selector>
+        </item>
+    </ripple>
+</inset>

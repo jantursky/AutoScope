@@ -16,6 +16,7 @@ object PhoneSources {
         return listOf(
             CarConnectionSource(CarConnectionMonitor.shared(app).tracker, SystemClock::elapsedRealtime),
             HostSource(AndroidHostEnvironment(app)),
+            PermissionsSource(AndroidPermissionChecker(app)),
             BatterySource(AndroidBatteryAdapter(app)),
             PowerSource(AndroidPowerAdapter(app), Build.VERSION.SDK_INT),
             BluetoothSource(AndroidBluetoothAdapter(app)),

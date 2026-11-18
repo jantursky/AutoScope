@@ -55,7 +55,7 @@ class CarRowsTest {
 
         assertEquals(3, first.count)
         assertEquals(6, first.rows.size)
-        assertEquals(RowAction.NEXT_PAGE, first.rows.last().action)
+        assertEquals(RowAction.NextPage, first.rows.last().action)
         assertEquals("Page 2 of 3", first.rows.last().lines.single())
         assertEquals(listOf("Row 11", "Row 12"), last.rows.map { it.title })
     }
@@ -93,28 +93,32 @@ class CarRowsTest {
     }
 
     @Test
-    fun `overview starts with the diagnostic marking, mark and log rows`() {
+    fun `overview starts with the diagnostic marking and the mark row`() {
         val snapshot = Snapshot(mapOf(Group.HOST to listOf(Field.ok("Host package", "gearhead", "test"))))
-        val rows = ViewRows.rows(CarView.OVERVIEW, snapshot, apiLevel = 8, missingPermissions = emptyList())
+        val rows = ViewRows.rows(CarView.OVERVIEW, snapshot, RowContext(8, emptyList(), null))
 
         assertEquals("AutoScope diagnostic tool", rows[0].title)
         assertEquals("Car App API level 8 (host)", rows[0].lines.single())
-        assertEquals(RowAction.MARK, rows[1].action)
-        assertEquals(RowAction.OPEN_LOG, rows[2].action)
-        assertEquals("gearhead (OK)", rows[3].lines.single())
+        assertEquals(RowAction.Mark, rows[1].action)
+        assertEquals("gearhead (OK)", rows[2].lines.single())
     }
 
     @Test
     fun `hardware view lists missing permissions in its grant row`() {
-        val rows = ViewRows.rows(CarView.HARDWARE, Snapshot.EMPTY, 8, listOf(CarPermissions.CAR_SPEED, CarPermissions.FINE_LOCATION))
+        val rows = ViewRows.rows(
+            CarView.HARDWARE,
+            Snapshot.EMPTY,
+            RowContext(8, listOf(CarPermissions.CAR_SPEED, CarPermissions.FINE_LOCATION), null),
+        )
 
-        assertEquals(RowAction.GRANT_PERMISSIONS, rows.single().action)
+        assertEquals(RowAction.GrantPermissions, rows.single().action)
         assertEquals("Missing: CAR_SPEED, ACCESS_FINE_LOCATION", rows.single().lines.single())
     }
 
     @Test
     fun `tabs fit the TabTemplate limit and a view changes only with its own groups`() {
         assertTrue(CarView.TABS.size in 2..4)
+        assertEquals(CarView.TABS.size, CarView.TABS.map { it.title.first() }.toSet().size)
         val before = Snapshot(mapOf(Group.HARDWARE to listOf(Field.ok("Make", "A", "t"))))
         val otherGroup = Snapshot(before.groups + (Group.SCREEN to listOf(Field.ok("Width", "1", "t"))))
         val ownGroup = Snapshot(mapOf(Group.HARDWARE to listOf(Field.ok("Make", "B", "t"))))

@@ -30,8 +30,8 @@ object Templates {
         row.action?.let { action ->
             val click = OnClickListener { onAction(action) }
             // CarContext.requestPermissions should be called from a ParkedOnlyOnClickListener (its javadoc).
-            setOnClickListener(if (action == RowAction.GRANT_PERMISSIONS) ParkedOnlyOnClickListener.create(click) else click)
-            if (action == RowAction.NEXT_PAGE || action == RowAction.OPEN_LOG) setBrowsable(true)
+            setOnClickListener(if (action == RowAction.GrantPermissions) ParkedOnlyOnClickListener.create(click) else click)
+            if (action == RowAction.NextPage || action is RowAction.Open) setBrowsable(true)
         }
     }.build()
 
@@ -40,8 +40,6 @@ object Templates {
 
     /** Tab contents must not carry a title, header or action strip (TabContents javadoc). */
     fun tabList(list: ItemList): ListTemplate = ListTemplate.Builder().setSingleList(list).build()
-
-    fun tabPane(pane: Pane): PaneTemplate = PaneTemplate.Builder(pane).build()
 
     /** A pushed list screen with a back action. Header is used from Car App API 7, the older title otherwise. */
     fun screenList(title: String, list: ItemList, apiLevel: Int): ListTemplate {

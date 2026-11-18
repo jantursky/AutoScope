@@ -2,9 +2,7 @@ package com.jantursky.autoscope.car
 
 import com.jantursky.autoscope.core.Status
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
-import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class TouchTest {
@@ -71,7 +69,7 @@ class TouchTest {
 
         assertEquals(Status.NOT_SUPPORTED_BY_HOST, fields.byLabel("Touch tester").status)
         assertEquals(Status.UNAVAILABLE, fields.byLabel("Tap latency").status)
-        assertFalse(TouchSource.testerUsable(6, surface))
+        assertEquals("MapWithContentTemplate needs Car App API 7, host has 6", MapSurface.blockedReason(6, surface))
 
         recorder.tapStarted()
         clock.now += 30
@@ -81,18 +79,18 @@ class TouchTest {
 
     @Test
     fun `a surface that never arrives marks the tester unavailable`() {
-        surface.testerOpened()
+        surface.surfaceRequested()
         assertEquals("waiting for the surface", read(fakePorts()).byLabel("Touch tester").value)
 
         clock.now += SurfaceState.SURFACE_TIMEOUT_MS
         val fields = read(fakePorts())
         assertEquals(Status.UNAVAILABLE, fields.byLabel("Touch tester").status)
-        assertFalse(TouchSource.testerUsable(8, surface))
+        assertEquals("the host provided no map surface", MapSurface.blockedReason(8, surface))
     }
 
     @Test
     fun `an available surface reports size and counters`() {
-        surface.testerOpened()
+        surface.surfaceRequested()
         surface.surfaceAvailable(SurfaceSize(800, 480, 160))
         recorder.click(5f, 5f)
 
@@ -100,7 +98,7 @@ class TouchTest {
         assertEquals("surface 800x480, 160 dpi", fields.byLabel("Touch tester").value)
         assertEquals("1", fields.byLabel("Clicks").value)
         assertEquals("click at (5, 5)", fields.byLabel("Last event").value)
-        assertTrue(TouchSource.testerUsable(8, surface))
+        assertNull(MapSurface.blockedReason(8, surface))
     }
 
     @Test

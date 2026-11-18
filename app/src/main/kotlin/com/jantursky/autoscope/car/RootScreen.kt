@@ -12,8 +12,9 @@ import androidx.car.app.versioning.CarAppApiLevels
 import com.jantursky.autoscope.core.Snapshot
 
 /**
- * The first screen. From Car App API 6 a TabTemplate with the four [CarView.TABS]; on older hosts a list
- * of the same views, each pushed as a [ViewScreen].
+ * The first screen (depth 1). From Car App API 6 a TabTemplate with the four [CarView.TABS]; on older
+ * hosts a list of the same four views, each pushed as a [ViewScreen], so More and its entries sit one
+ * screen deeper there.
  */
 class RootScreen(carContext: CarContext, deps: SessionDeps) : BaseScreen(carContext, deps, "Root") {
 
@@ -45,14 +46,10 @@ class RootScreen(carContext: CarContext, deps: SessionDeps) : BaseScreen(carCont
     }
 
     private fun content(snapshot: Snapshot): Template =
-        if (active == CarView.TOUCH) {
-            Templates.tabPane(touchPane(snapshot))
-        } else {
-            Templates.tabList(Templates.itemList(listPage(active, snapshot, 0).rows, ::onAction))
-        }
+        Templates.tabList(Templates.itemList(listPage(active, snapshot, 0).rows, ::onAction))
 
     override fun onAction(action: RowAction) {
-        if (action == RowAction.NEXT_PAGE) {
+        if (action == RowAction.NextPage) {
             if (canPushList()) screenManager.push(ViewScreen(carContext, deps, active, 1))
         } else {
             super.onAction(action)
@@ -63,8 +60,8 @@ class RootScreen(carContext: CarContext, deps: SessionDeps) : BaseScreen(carCont
         val list = ItemList.Builder()
         CarView.TABS.forEach { view ->
             list.addItem(
-                Row.Builder().setTitle(view.title).setBrowsable(true)
-                    .setOnClickListener { screenManager.push(ViewScreen(carContext, deps, view, 0)) }
+                Row.Builder().setTitle(view.title).addText(view.summary).setBrowsable(true)
+                    .setOnClickListener { open(view) }
                     .build(),
             )
         }

@@ -34,7 +34,7 @@ class ScreenSource(
         apiLevel < CarAppApiLevels.LEVEL_7 ->
             Field.notSupported(label, source, needsLevel("The map surface (MapWithContentTemplate)", 7, apiLevel))
         area == null ->
-            Field.unavailable(label, source, "Known only after the touch tester (map surface) has been opened")
+            Field.unavailable(label, source, "Known only after a map surface screen (touch tester or Visual) has been opened")
         area.isEmpty -> Field.unavailable(label, source, "Host reported an empty area, which means unknown")
         else -> Field.ok(label, area, source)
     }

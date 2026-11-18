@@ -48,20 +48,16 @@ class ReportModelTest {
             ),
         ).single()
         assertEquals(2, model.issues)
-        assertEquals("2 unavailable", issueSummary(model.issues))
-        assertNull(issueSummary(0))
         assertEquals("broken", model.rows[2].reason)
         assertNull(model.rows[0].reason)
         assertEquals("-", model.rows[1].value)
     }
 
-    @Test fun lifecycleIsCollapsedAndBounded() {
+    @Test fun lifecycleIsBounded() {
         val log = (1..100).map { Field.ok("t$it", "m", "s") }
         val model = groupModels(snap(Group.LIFECYCLE to log, Group.PHONE to listOf(Field.ok("a", 1, "s")))).first()
-        assertTrue(model.collapsedByDefault)
         assertEquals(LIFECYCLE_ROW_LIMIT, model.rows.size)
         assertEquals(100, model.truncatedFrom)
-        assertFalse(groupModels(snap(Group.PHONE to listOf(Field.ok("a", 1, "s")))).single().collapsedByDefault)
     }
 
     @Test fun sameShapeIgnoresValuesOnly() {

@@ -22,7 +22,7 @@ class TouchSource(
             return listOf(latencyField(stats)) + TESTER_LABELS.allNotSupported(SOURCE_SURFACE, reason)
         }
         if (surface.surfaceMissing()) {
-            val reason = "Touch tester opened, but the host provided no surface within " +
+            val reason = "Map screen opened, but the host provided no surface within " +
                 "${SurfaceState.SURFACE_TIMEOUT_MS / 1000} s"
             return listOf(latencyField(stats)) + TESTER_LABELS.allUnavailable(SOURCE_SURFACE, reason)
         }
@@ -32,13 +32,13 @@ class TouchSource(
 
     private fun latencyField(stats: TouchStats): Field = stats.tapLatencyMillis
         ?.let { Field.ok(TAP_LATENCY, "$it ms", SOURCE_LATENCY) }
-        ?: Field.unavailable(TAP_LATENCY, SOURCE_LATENCY, "Tap \"$MEASURE_ACTION\" on the Touch tab")
+        ?: Field.unavailable(TAP_LATENCY, SOURCE_LATENCY, "Tap \"$MEASURE_ACTION\" on the Touch screen")
 
     private fun testerField(): Field {
         val size = surface.size
         return when {
             size != null -> Field.ok(TESTER, "surface ${size.width}x${size.height}, ${size.dpi} dpi", SOURCE_SURFACE)
-            surface.openedAtMillis == null -> Field.ok(TESTER, "ready, not opened yet", SOURCE_SURFACE)
+            surface.requestedAtMillis == null -> Field.ok(TESTER, "ready, not opened yet", SOURCE_SURFACE)
             surface.everAvailable -> Field.ok(TESTER, "surface released", SOURCE_SURFACE)
             else -> Field.ok(TESTER, "waiting for the surface", SOURCE_SURFACE)
         }
@@ -63,10 +63,6 @@ class TouchSource(
 
     companion object {
         const val MEASURE_ACTION = "Measure tap latency"
-
-        /** The tester needs MapWithContentTemplate and a surface; otherwise the Touch tab measures tap latency. */
-        fun testerUsable(apiLevel: Int, surface: SurfaceState) =
-            apiLevel >= CarAppApiLevels.LEVEL_7 && !surface.surfaceMissing()
 
         private const val SOURCE_SURFACE = "SurfaceCallback (MapWithContentTemplate)"
         private const val SOURCE_LATENCY = "Row tap to next onGetTemplate"

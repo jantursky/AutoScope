@@ -13,7 +13,6 @@ import com.jantursky.autoscope.ThemeMode
 
 /**
  * Sticky top bar: connection pill, last update time, refresh interval dropdown and theme menu.
- * The bottom divider shows once content scrolls under it.
  */
 internal class HeaderView(
     context: Context,
@@ -32,7 +31,6 @@ internal class HeaderView(
     }
     private val intervalButton = context.label(13f, R.color.text_primary, bold = true)
     private val themeButton = ImageView(context)
-    private val divider = context.divider().apply { alpha = 0f }
     private var interval = selectedInterval
     private var theme = selectedTheme
 
@@ -48,7 +46,6 @@ internal class HeaderView(
             addView(themeButton, LayoutParams(context.dp(48), context.dp(48)))
         }
         addView(bar)
-        addView(divider)
         setUpIntervalButton()
         setUpThemeButton()
         bind(ConnectionPill("Not connected", PillKind.DISCONNECTED), "")
@@ -101,10 +98,6 @@ internal class HeaderView(
         val connected = state.kind == PillKind.CONNECTED
         pill.setBackgroundResource(if (connected) R.drawable.pill_connected else R.drawable.pill_disconnected)
         pill.setTextColor(context.color(if (connected) R.color.pill_connected_text else R.color.pill_disconnected_text))
-    }
-
-    fun setContentScrolled(scrolled: Boolean) {
-        divider.animate().alpha(if (scrolled) 1f else 0f).setDuration(EXPAND_MS).start()
     }
 
     private companion object {

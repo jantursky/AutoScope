@@ -41,7 +41,9 @@ class AutoScopeSession(private val container: AppContainer) : Session() {
     override fun onCreateScreen(intent: Intent): Screen {
         val ports = AndroidCarPorts.create(carContext)
         sources.bind(ports)
-        val listeners = HardwareListeners(carContext, ports.apiLevel, ports.permissions, sources.hardware, container.eventLog)
+        val listeners = HardwareListeners(
+            carContext, ports.apiLevel, ports.permissions, sources.hardware, sources.samples, container.eventLog,
+        )
         hardware = listeners
         listeners.start()
         container.acquireTicker()

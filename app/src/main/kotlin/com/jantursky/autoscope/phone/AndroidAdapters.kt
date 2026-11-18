@@ -98,3 +98,8 @@ internal class AndroidMemoryAdapter(context: Context) : MemoryAdapter {
         return MemoryReading(info.availMem, info.totalMem, info.lowMemory)
     }
 }
+
+internal class AndroidPermissionChecker(private val context: Context) : PermissionChecker {
+    override fun isGranted(permission: String) =
+        context.packageManager.checkPermission(permission, context.packageName) == android.content.pm.PackageManager.PERMISSION_GRANTED
+}

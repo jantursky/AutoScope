@@ -19,6 +19,9 @@ class SessionDeps(
 ) {
     val sources: CarSources get() = container.carSources
 
+    /** Which map surface screen holds the AppManager SurfaceCallback. */
+    val surfaceOwnership = SurfaceOwnership()
+
     fun missingPermissions(): List<String> = CarPermissions.HARDWARE.filterNot(ports.permissions::isGranted)
 
     /** List limit of the host, from ConstraintManager or the library minimum. */
@@ -65,26 +68,44 @@ abstract class BaseScreen(carContext: CarContext, protected val deps: SessionDep
         refresh()
     }
 
-    /** Lists never go deeper than [MAX_LIST_DEPTH]; the fifth step of a task must not be a list. */
-    protected fun canPushList(): Boolean = screenManager.stackSize < MAX_LIST_DEPTH
+    protected fun rowContext() = RowContext(
+        deps.ports.apiLevel,
+        deps.missingPermissions(),
+        MapSurface.blockedReason(deps.ports.apiLevel, deps.sources.surface),
+    )
+
+    /** Whether a further page of a list may be pushed; the fifth step of a task must not be a list. */
+    protected fun canPushList(): Boolean = Navigation.mayPush(ViewKind.LIST, screenManager.stackSize)
 
     protected open fun onAction(action: RowAction) {
         when (action) {
-            RowAction.REFRESH -> refreshNow()
-            RowAction.MARK -> mark()
-            RowAction.OPEN_LOG -> if (canPushList()) screenManager.push(ViewScreen(carContext, deps, CarView.LOG, 0))
-            RowAction.GRANT_PERMISSIONS -> grantPermissions()
-            RowAction.NEXT_PAGE -> Unit
+            RowAction.Refresh -> refreshNow()
+            RowAction.Mark -> mark()
+            RowAction.GrantPermissions -> grantPermissions()
+            is RowAction.Open -> open(action.view)
+            RowAction.NextPage -> Unit
         }
     }
 
-    /** Rows of a list view, paged by the host list limit, each page starting with "Refresh values". */
-    protected fun listPage(view: CarView, snapshot: Snapshot, pageIndex: Int): Page = CarRows.refreshablePage(
-        ViewRows.rows(view, snapshot, deps.ports.apiLevel, deps.missingPermissions()),
-        deps.listLimit(),
-        pageIndex,
-        canPushList(),
-    )
+    /** Pushes the screen of [view] when the depth rules allow it; page 1 for a list. */
+    protected fun open(view: CarView) {
+        if (!Navigation.mayPush(view.kind, screenManager.stackSize)) return
+        deps.container.eventLog.add("Open ${view.title}")
+        screenManager.push(if (view == CarView.VISUAL) VisualScreen(carContext, deps) else ViewScreen(carContext, deps, view, 0))
+    }
+
+    /**
+     * Rows of a list view, paged by the host list limit. Data pages start with "Refresh values"; the More
+     * list only navigates and fits the smallest list limit (6) without paging.
+     */
+    protected fun listPage(view: CarView, snapshot: Snapshot, pageIndex: Int): Page {
+        val rows = ViewRows.rows(view, snapshot, rowContext())
+        return if (view == CarView.MORE) {
+            CarRows.page(rows, deps.listLimit(), pageIndex, canPushList())
+        } else {
+            CarRows.refreshablePage(rows, deps.listLimit(), pageIndex, canPushList())
+        }
+    }
 
     /**
      * The Touch view: the TOUCH readings (as many as the pane limit allows) and two large actions. The first
@@ -92,10 +113,13 @@ abstract class BaseScreen(carContext: CarContext, protected val deps: SessionDep
      * refreshes the values, as pane rows cannot be clickable.
      */
     protected fun touchPane(snapshot: Snapshot): Pane {
-        val rows = ViewRows.rows(CarView.TOUCH, snapshot, deps.ports.apiLevel, emptyList()).take(deps.paneLimit())
-        val action = if (TouchSource.testerUsable(deps.ports.apiLevel, deps.sources.surface)) {
+        val context = rowContext()
+        val rows = ViewRows.rows(CarView.TOUCH, snapshot, context).take(deps.paneLimit())
+        val action = if (context.mapBlockedReason == null) {
             Action.Builder().setTitle("Open touch tester").setOnClickListener {
-                if (screenManager.stackSize < MAX_DEPTH) screenManager.push(TouchTesterScreen(carContext, deps))
+                if (Navigation.mayPush(ViewKind.MAP, screenManager.stackSize)) {
+                    screenManager.push(TouchTesterScreen(carContext, deps))
+                }
             }.build()
         } else {
             Action.Builder().setTitle(TouchSource.MEASURE_ACTION).setOnClickListener {
@@ -103,12 +127,15 @@ abstract class BaseScreen(carContext: CarContext, protected val deps: SessionDep
                 refresh()
             }.build()
         }
-        val refresh = Action.Builder().setTitle(CarRows.REFRESH_TITLE).setOnClickListener { refreshNow() }.build()
         return Pane.Builder().apply { rows.forEach { addRow(Templates.paneRow(it)) } }
             .addAction(action)
-            .addAction(refresh)
+            .addAction(refreshAction())
             .build()
     }
+
+    /** "Refresh values" as a pane action, as pane rows cannot be clickable. */
+    protected fun refreshAction(): Action =
+        Action.Builder().setTitle(CarRows.REFRESH_TITLE).setOnClickListener { refreshNow() }.build()
 
     private fun mark() {
         val text = try {
@@ -131,10 +158,5 @@ abstract class BaseScreen(carContext: CarContext, protected val deps: SessionDep
             deps.hardware.start()
             refresh()
         }
-    }
-
-    companion object {
-        const val MAX_LIST_DEPTH = 4
-        const val MAX_DEPTH = 5
     }
 }

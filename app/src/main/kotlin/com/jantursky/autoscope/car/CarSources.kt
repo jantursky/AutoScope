@@ -21,6 +21,7 @@ class CarSources(
     val touch = TouchRecorder(clock)
     val performance = PerformanceTracker(clock)
     val hardware = HardwareState()
+    val samples = SensorSamples(clock)
 
     val sources: List<FieldSource> = listOf(
         CarHostSource(::currentPorts),
@@ -37,6 +38,7 @@ class CarSources(
         surface.reset()
         touch.reset()
         hardware.clear()
+        samples.clear()
         this.ports = ports
         refreshConstraints()
         eventLog.add("Car sources bound, Car App API ${ports.apiLevel}")
@@ -52,6 +54,7 @@ class CarSources(
         ports = null
         constraints = ConstraintReadings.NONE
         hardware.clear()
+        samples.clear()
         surface.reset()
         eventLog.add("Car sources unbound")
     }

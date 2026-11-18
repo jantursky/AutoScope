@@ -2,12 +2,13 @@ package com.jantursky.autoscope.phone
 
 import android.app.Activity
 import android.content.Context
+import android.graphics.Typeface
 import android.os.Bundle
 import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
 import android.view.WindowInsets
-import android.widget.Button
+import android.widget.FrameLayout
 import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.TextView
@@ -16,6 +17,7 @@ import com.jantursky.autoscope.R
 import com.jantursky.autoscope.Settings
 import com.jantursky.autoscope.container
 import com.jantursky.autoscope.core.Group
+import com.jantursky.autoscope.core.SavedReport
 import com.jantursky.autoscope.core.Snapshot
 import java.time.Instant
 import java.time.LocalTime
@@ -28,7 +30,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 
-private const val STATE_EXPANDED = "expanded_groups"
+private const val STATE_TAB = "selected_tab"
 private val INTERVAL_LABELS = listOf(
     R.string.interval_500, R.string.interval_1000, R.string.interval_2000,
     R.string.interval_5000, R.string.interval_10000,
@@ -36,19 +38,27 @@ private val INTERVAL_LABELS = listOf(
 private val CLOCK = DateTimeFormatter.ofPattern("HH:mm:ss")
 
 /**
- * Phone screen: sticky connection bar, save, refresh and theme controls, live report cards and saved
- * reports. Views are built in code. Live rows are updated in place so scrolling never jumps. The ticker
- * runs only while the screen is visible.
+ * Phone screen: sticky connection bar and tab chips, one page below them (a diagnostics group, changes,
+ * saved reports or help). Views are built in code. Live rows are updated in place so scrolling never
+ * jumps. The ticker runs only while the screen is visible.
  */
 class MainActivity : Activity() {
 
     private lateinit var header: HeaderView
-    private lateinit var liveCards: LinearLayout
+    private lateinit var tabBar: TabBarView
+    private lateinit var scroll: ScrollView
     private lateinit var waiting: TextView
-    private lateinit var toggleAll: TextView
+    private lateinit var groupHost: FrameLayout
+    private lateinit var changesPage: LinearLayout
+    private lateinit var changesHolder: LinearLayout
     private lateinit var savedList: LinearLayout
-    private var cards = emptyList<GroupCardView>()
-    private val expanded = mutableMapOf<Group, Boolean>()
+    private lateinit var helpPage: LinearLayout
+    private var groupCard: GroupCardView? = null
+    private var models = emptyList<GroupModel>()
+    private var tabs = tabModels(emptyList())
+    private var selectedKey: String? = null
+    private var shownKey: String? = null
+    private val scrollPositions = mutableMapOf<String, Int>()
     private var scope: CoroutineScope? = null
 
     override fun attachBaseContext(newBase: Context) {
@@ -57,15 +67,14 @@ class MainActivity : Activity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        savedInstanceState?.getStringArrayList(STATE_EXPANDED)?.let { open ->
-            Group.entries.forEach { expanded[it] = it.name in open }
-        }
+        selectedKey = savedInstanceState?.getString(STATE_TAB)
         setContentView(buildContent())
+        render()
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
-        outState.putStringArrayList(STATE_EXPANDED, ArrayList(expanded.filterValues { it }.keys.map { it.name }))
+        outState.putString(STATE_TAB, selectedKey)
     }
 
     override fun onStart() {
@@ -93,37 +102,36 @@ class MainActivity : Activity() {
                 recreate()
             },
         )
-        val column = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
-        column.addView(saveButton())
-        column.addView(liveReportHeader())
+        tabBar = TabBarView(this, onSelect = { selectedKey = it.key; render() }, onSave = ::saveSnapshot)
         waiting = label(14f, R.color.text_tertiary).apply {
             setText(R.string.waiting_for_data)
             gravity = Gravity.CENTER
             setPadding(0, dp(24), 0, dp(24))
         }
-        liveCards = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
-        column.addView(waiting)
-        column.addView(liveCards)
-        column.addView(sectionTitle(R.string.saved_reports))
+        groupHost = FrameLayout(this)
+        changesHolder = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
+        changesPage = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            addView(sectionTitle(R.string.changes_title))
+            addView(changesHolder)
+        }
         savedList = card()
-        column.addView(savedList)
-        val scroll = ScrollView(this).apply {
+        helpPage = helpPage()
+        val column = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            listOf(waiting, groupHost, changesPage, savedList, helpPage).forEach(::addView)
+        }
+        scroll = ScrollView(this).apply {
             id = R.id.report_scroll
             isVerticalScrollBarEnabled = false
             setPadding(dp(16), dp(8), dp(16), dp(16))
             addView(column, ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT))
-            var scrolled = false
-            setOnScrollChangeListener { _, _, y, _, _ ->
-                if ((y > 0) != scrolled) {
-                    scrolled = y > 0
-                    header.setContentScrolled(scrolled)
-                }
-            }
         }
         return LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             setBackgroundColor(color(R.color.background))
             addView(header)
+            addView(tabBar)
             addView(scroll, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f))
             applySystemBarPadding(this)
         }
@@ -138,59 +146,45 @@ class MainActivity : Activity() {
         }
     }
 
-    private fun saveButton() = Button(this).apply {
-        setText(R.string.save_snapshot)
-        isAllCaps = false
-        textSize = 15f
-        setTextColor(color(R.color.on_accent))
-        stateListAnimator = null
-        tappable(R.drawable.button_primary) { saveSnapshot() }
-        layoutParams = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(48)).apply { bottomMargin = dp(8) }
-    }
-
-    private fun liveReportHeader() = LinearLayout(this).apply {
-        gravity = Gravity.CENTER_VERTICAL
-        setPadding(dp(8), 0, 0, 0)
-        addView(label(13f, R.color.text_secondary, bold = true).apply { setText(R.string.live_report) })
-        addView(View(context), LinearLayout.LayoutParams(0, 0, 1f))
-        toggleAll = label(13f, R.color.accent, bold = true).apply {
-            gravity = Gravity.CENTER
-            minHeight = dp(48)
-            minWidth = dp(48)
-            setPadding(dp(12), 0, dp(12), 0)
-            tappable(R.drawable.ripple_rect) {
-                val open = cards.none { it.isExpanded }
-                cards.forEach { it.setExpanded(open) }
-            }
-        }
-        addView(toggleAll)
-    }
-
     private fun sectionTitle(text: Int) = label(13f, R.color.text_secondary, bold = true).apply {
         setText(text)
-        setPadding(dp(8), dp(16), dp(8), dp(8))
+        setPadding(dp(8), dp(8), dp(8), dp(8))
     }
 
     private fun show(snapshot: Snapshot) {
         header.bind(connectionPill(snapshot), CLOCK.format(LocalTime.now()))
-        val models = groupModels(snapshot)
+        models = groupModels(snapshot)
+        tabs = tabModels(models)
         waiting.visibility = if (models.isEmpty()) View.VISIBLE else View.GONE
-        if (cards.map { it.group } != models.map { it.group }) {
-            liveCards.removeAllViews()
-            cards = models.map { model ->
-                GroupCardView(this, model, expanded[model.group] ?: !model.collapsedByDefault) {
-                    expanded[model.group] = it
-                    updateToggleLabel()
-                }.also(liveCards::addView)
+        render()
+    }
+
+    /** Applies tabs and the selection to the views; swaps the page only when the selected tab changed. */
+    private fun render() {
+        val selected = resolveTab(tabs, selectedKey)
+        tabBar.bind(tabs, selected.id)
+        val id = selected.id
+        if (selected.id.key != shownKey) switchTo(selected.id)
+        if (id is TabId.OfGroup) {
+            val model = models.first { it.group == id.group }
+            val card = groupCard
+            if (card == null || card.group != id.group) {
+                groupHost.removeAllViews()
+                groupCard = GroupCardView(this, model).also(groupHost::addView)
+            } else {
+                card.bind(model)
             }
-            updateToggleLabel()
-        } else {
-            cards.zip(models).forEach { (view, model) -> view.bind(model) }
         }
     }
 
-    private fun updateToggleLabel() {
-        toggleAll.setText(if (cards.any { it.isExpanded }) R.string.collapse_all else R.string.expand_all)
+    private fun switchTo(id: TabId) {
+        shownKey?.let { scrollPositions[it] = scroll.scrollY }
+        shownKey = id.key
+        groupHost.visibility = if (id is TabId.OfGroup) View.VISIBLE else View.GONE
+        changesPage.visibility = if (id == TabId.Changes) View.VISIBLE else View.GONE
+        savedList.visibility = if (id == TabId.Reports) View.VISIBLE else View.GONE
+        helpPage.visibility = if (id == TabId.Help) View.VISIBLE else View.GONE
+        scroll.post { scroll.scrollTo(0, scrollPositions[id.key] ?: 0) }
     }
 
     private fun saveSnapshot() {
@@ -202,6 +196,7 @@ class MainActivity : Activity() {
     private fun showSavedReports() {
         savedList.removeAllViews()
         val reports = container.reports.list()
+        showChanges(reports)
         if (reports.isEmpty()) {
             savedList.addView(
                 label(13f, R.color.text_tertiary).apply {
@@ -219,9 +214,15 @@ class MainActivity : Activity() {
             val text = savedReportLabel(report.id, now, ZoneId.systemDefault(), Locale.getDefault())
             savedList.addView(
                 savedRow(text) { startActivity(shareIntent(this, report, getString(R.string.share_chooser))) },
-                LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(64)),
+                LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(56)),
             )
         }
+    }
+
+    private fun showChanges(reports: List<SavedReport>) {
+        val texts = reports.take(2).mapNotNull { runCatching { it.text.readText() }.getOrNull() }
+        changesHolder.removeAllViews()
+        changesHolder.addView(changesCard(if (texts.size == 2) texts[1] to texts[0] else null))
     }
 
     private fun savedRow(text: SavedReportLabel, onShare: () -> Unit) = LinearLayout(this).apply {
@@ -234,16 +235,19 @@ class MainActivity : Activity() {
         }
         addView(titles, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
         addView(
-            Button(context).apply {
+            TextView(context).apply {
                 setText(R.string.share)
-                isAllCaps = false
-                textSize = 14f
+                textSize = 13f
+                typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
                 setTextColor(color(R.color.accent))
-                stateListAnimator = null
-                minHeight = dp(48)
-                minWidth = dp(72)
-                tappable(R.drawable.button_text) { onShare() }
+                gravity = Gravity.CENTER_VERTICAL
+                compoundDrawablePadding = dp(6)
+                setCompoundDrawablesRelativeWithIntrinsicBounds(R.drawable.ic_share, 0, 0, 0)
+                tappable(R.drawable.pill_tonal) { onShare() }
+                // After tappable(): setting a background resets the padding to the drawable's own.
+                setPadding(dp(12), 0, dp(14), 0)
             },
+            LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, dp(48)),
         )
     }
 }

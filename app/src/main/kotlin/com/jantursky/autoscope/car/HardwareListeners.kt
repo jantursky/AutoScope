@@ -28,6 +28,7 @@ class HardwareListeners(
     private val apiLevel: Int,
     private val permissions: PermissionPort,
     private val state: HardwareState,
+    private val samples: SensorSamples,
     private val eventLog: EventLog,
 ) {
     private val removals = mutableListOf<() -> Unit>()
@@ -68,7 +69,10 @@ class HardwareListeners(
             HardwareFeature.ENERGY_PROFILE ->
                 info.fetchEnergyProfile(executor) { state.store(feature, HardwareFields.energyProfile(it)) }
             HardwareFeature.SPEED -> {
-                val l = OnCarDataAvailableListener<Speed> { state.store(feature, HardwareFields.speed(it)) }
+                val l = OnCarDataAvailableListener<Speed> {
+                    state.store(feature, HardwareFields.speed(it))
+                    samples.speed(it.rawSpeedMetersPerSecond)
+                }
                 info.addSpeedListener(executor, l)
                 removals += { info.removeSpeedListener(l) }
             }
@@ -89,7 +93,10 @@ class HardwareListeners(
             }
             HardwareFeature.EV_STATUS -> registerEvStatus(info, feature)
             HardwareFeature.ACCELEROMETER -> {
-                val l = OnCarDataAvailableListener<Accelerometer> { state.store(feature, HardwareFields.accelerometer(it)) }
+                val l = OnCarDataAvailableListener<Accelerometer> {
+                    state.store(feature, HardwareFields.accelerometer(it))
+                    samples.accelerometer(it.forces)
+                }
                 sensors.addAccelerometerListener(rate, executor, l)
                 removals += { sensors.removeAccelerometerListener(l) }
             }
@@ -99,7 +106,10 @@ class HardwareListeners(
                 removals += { sensors.removeGyroscopeListener(l) }
             }
             HardwareFeature.COMPASS -> {
-                val l = OnCarDataAvailableListener<Compass> { state.store(feature, HardwareFields.compass(it)) }
+                val l = OnCarDataAvailableListener<Compass> {
+                    state.store(feature, HardwareFields.compass(it))
+                    samples.compass(it.orientations)
+                }
                 sensors.addCompassListener(rate, executor, l)
                 removals += { sensors.removeCompassListener(l) }
             }

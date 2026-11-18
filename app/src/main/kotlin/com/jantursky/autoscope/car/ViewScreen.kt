@@ -4,7 +4,7 @@ import androidx.car.app.CarContext
 import androidx.car.app.model.Template
 import com.jantursky.autoscope.core.Snapshot
 
-/** One view pushed on the stack: a further page of a tab, the log, or a view of the pre-tab menu. */
+/** One view pushed on the stack: an entry of More, a further page of a list, or a view of the pre-tab menu. */
 class ViewScreen(
     carContext: CarContext,
     deps: SessionDeps,
@@ -22,7 +22,7 @@ class ViewScreen(
     }
 
     override fun onAction(action: RowAction) {
-        if (action == RowAction.NEXT_PAGE) {
+        if (action == RowAction.NextPage) {
             if (canPushList()) screenManager.push(ViewScreen(carContext, deps, view, pageIndex + 1))
         } else {
             super.onAction(action)
