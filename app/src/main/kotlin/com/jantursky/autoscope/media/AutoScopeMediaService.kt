@@ -35,9 +35,10 @@ class AutoScopeMediaService : MediaBrowserServiceCompat() {
 
                 override fun onPlay() = setState(PlaybackStateCompat.STATE_PAUSED)
             })
-            setState(PlaybackStateCompat.STATE_PAUSED)
             isActive = true
         }
+        // After the assignment: setState reads the lateinit session.
+        setState(PlaybackStateCompat.STATE_PAUSED)
         sessionToken = session.sessionToken
         app.eventLog.add("Media service created")
         app.acquireTicker()
