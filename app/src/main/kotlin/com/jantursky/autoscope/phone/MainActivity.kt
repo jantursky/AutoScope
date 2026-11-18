@@ -28,6 +28,8 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 
 private const val STATE_TAB = "selected_tab"
@@ -38,7 +40,7 @@ private val INTERVAL_LABELS = listOf(
 private val CLOCK = DateTimeFormatter.ofPattern("HH:mm:ss")
 
 /**
- * Phone screen: sticky connection bar and tab chips, one page below them (a diagnostics group, changes,
+ * Phone screen: sticky connection bar and tab chips, one page below them (the car, a diagnostics group, changes,
  * saved reports or help). Views are built in code. Live rows are updated in place so scrolling never
  * jumps. The ticker runs only while the screen is visible.
  */
@@ -47,7 +49,7 @@ class MainActivity : Activity() {
     private lateinit var header: HeaderView
     private lateinit var tabBar: TabBarView
     private lateinit var scroll: ScrollView
-    private lateinit var waiting: TextView
+    private lateinit var carPage: CarPageView
     private lateinit var groupHost: FrameLayout
     private lateinit var changesPage: LinearLayout
     private lateinit var changesHolder: LinearLayout
@@ -83,6 +85,11 @@ class MainActivity : Activity() {
         val collector = CoroutineScope(Job() + Dispatchers.Main.immediate)
         scope = collector
         collector.launch { container.repository.snapshot.collect(::show) }
+        collector.launch {
+            combine(container.carSources.telemetry, container.repository.snapshot, ::carPicture)
+                .distinctUntilChanged()
+                .collect(carPage::bind)
+        }
         showSavedReports()
     }
 
@@ -103,11 +110,7 @@ class MainActivity : Activity() {
             },
         )
         tabBar = TabBarView(this, onSelect = { selectedKey = it.key; render() }, onSave = ::saveSnapshot)
-        waiting = label(14f, R.color.text_tertiary).apply {
-            setText(R.string.waiting_for_data)
-            gravity = Gravity.CENTER
-            setPadding(0, dp(24), 0, dp(24))
-        }
+        carPage = CarPageView(this)
         groupHost = FrameLayout(this)
         changesHolder = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
         changesPage = LinearLayout(this).apply {
@@ -119,7 +122,7 @@ class MainActivity : Activity() {
         helpPage = helpPage()
         val column = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
-            listOf(waiting, groupHost, changesPage, savedList, helpPage).forEach(::addView)
+            listOf(carPage, groupHost, changesPage, savedList, helpPage).forEach(::addView)
         }
         scroll = ScrollView(this).apply {
             id = R.id.report_scroll
@@ -155,7 +158,6 @@ class MainActivity : Activity() {
         header.bind(connectionPill(snapshot), CLOCK.format(LocalTime.now()))
         models = groupModels(snapshot)
         tabs = tabModels(models)
-        waiting.visibility = if (models.isEmpty()) View.VISIBLE else View.GONE
         render()
     }
 
@@ -180,6 +182,7 @@ class MainActivity : Activity() {
     private fun switchTo(id: TabId) {
         shownKey?.let { scrollPositions[it] = scroll.scrollY }
         shownKey = id.key
+        carPage.visibility = if (id == TabId.Car) View.VISIBLE else View.GONE
         groupHost.visibility = if (id is TabId.OfGroup) View.VISIBLE else View.GONE
         changesPage.visibility = if (id == TabId.Changes) View.VISIBLE else View.GONE
         savedList.visibility = if (id == TabId.Reports) View.VISIBLE else View.GONE

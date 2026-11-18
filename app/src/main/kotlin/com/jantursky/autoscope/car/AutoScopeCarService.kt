@@ -42,7 +42,8 @@ class AutoScopeSession(private val container: AppContainer) : Session() {
         val ports = AndroidCarPorts.create(carContext)
         sources.bind(ports)
         val listeners = HardwareListeners(
-            carContext, ports.apiLevel, ports.permissions, sources.hardware, sources.samples, container.eventLog,
+            carContext, ports.apiLevel, ports.permissions, sources.hardware, sources.samples, sources.telemetryState,
+            container.eventLog,
         )
         hardware = listeners
         listeners.start()

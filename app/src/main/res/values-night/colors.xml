@@ -16,4 +16,11 @@
     <color name="pill_connected_text">#7FE0A0</color>
     <color name="pill_disconnected_bg">#222126</color>
     <color name="pill_disconnected_text">#A9ACB6</color>
+    <color name="car_body">#4A4E59</color>
+    <color name="car_glass">#1A1B20</color>
+    <color name="car_light">#FFD54F</color>
+    <color name="car_link_projection">#4CD27A</color>
+    <color name="car_link_native">#42B2FC</color>
+    <color name="car_charge_open">#FFB74D</color>
+    <color name="car_charge_connected">#4CD27A</color>
 </resources>

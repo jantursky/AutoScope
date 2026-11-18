@@ -1,9 +1,11 @@
 package com.jantursky.autoscope.car
 
 import androidx.car.app.versioning.CarAppApiLevels
+import com.jantursky.autoscope.Reading
 import com.jantursky.autoscope.core.Field
 import com.jantursky.autoscope.core.FieldSource
 import com.jantursky.autoscope.core.Group
+import com.jantursky.autoscope.core.Status
 import java.util.concurrent.ConcurrentHashMap
 
 /**
@@ -48,30 +50,41 @@ class HardwareSource(
 
     private fun fields(feature: HardwareFeature, p: CarPorts?): List<Field> {
         val labels = feature.labels
+        if (p == null) return labels.allUnavailable(feature.source, NO_SESSION)
+        val missing = HardwareGate.block(feature, p.apiLevel, p.permissions)
+            ?: state.failure(feature)?.let { NoValue(Status.UNAVAILABLE, it) }
+        return missing?.let { m -> labels.map { m.field(it, feature.source) } }
+            ?: state.reading(feature)
+            ?: labels.allUnavailable(feature.source, NO_VALUE_YET)
+    }
+}
+
+/** Why a value is missing, in the words a car row or a drawing shows. */
+data class NoValue(val status: Status, val reason: String) {
+    fun field(label: String, source: String) = Field(label, null, source, status, reason)
+
+    fun <T> reading(): Reading<T> = Reading.missing(status, reason)
+}
+
+/** The API level and permission rules for registering a hardware item; fields and telemetry share them. */
+object HardwareGate {
+
+    /** Why [feature] cannot deliver values in this session, or null when it may be registered. */
+    fun block(feature: HardwareFeature, apiLevel: Int, permissions: PermissionPort): NoValue? {
         val permission = feature.permission
         return when {
-            p == null -> labels.allUnavailable(feature.source, NO_SESSION)
-            p.apiLevel < CarAppApiLevels.LEVEL_3 ->
-                labels.allNotSupported(feature.source, needsLevel("CarHardwareManager", 3, p.apiLevel))
-            permission != null && !granted(p, permission) ->
-                labels.map { Field.permissionMissing(it, feature.source, permission) }
-            else -> state.failure(feature)?.let { labels.allUnavailable(feature.source, it) }
-                ?: state.reading(feature)
-                ?: labels.allUnavailable(feature.source, "No value from the car yet")
+            apiLevel < CarAppApiLevels.LEVEL_3 ->
+                NoValue(Status.NOT_SUPPORTED_BY_HOST, needsLevel("CarHardwareManager", 3, apiLevel))
+            permission != null && !granted(permissions, permission) ->
+                NoValue(Status.PERMISSION_MISSING, "Missing permission: ${CarPermissions.shortName(permission)}")
+            else -> null
         }
     }
 
-    private fun granted(p: CarPorts, permission: String) =
+    private fun granted(permissions: PermissionPort, permission: String) =
         try {
-            p.permissions.isGranted(permission)
+            permissions.isGranted(permission)
         } catch (e: Exception) {
             false
         }
-
-    companion object {
-        /** Whether [feature] may be registered now; the same rules [read] reports. */
-        fun mayRegister(feature: HardwareFeature, apiLevel: Int, permissions: PermissionPort): Boolean =
-            apiLevel >= CarAppApiLevels.LEVEL_3 &&
-                (feature.permission == null || permissions.isGranted(feature.permission))
-    }
 }

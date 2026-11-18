@@ -21,16 +21,10 @@ import java.util.Locale
 /** Turns CarHardwareManager results into fields. Pure; the labels match [HardwareFeature.labels]. */
 object HardwareFields {
 
-    /** Maps a CarValue status to a field status; only STATUS_SUCCESS with a value is OK. */
+    /** Maps a CarValue to a field; only STATUS_SUCCESS with a value is OK. */
     fun <T> carValue(label: String, source: String, value: CarValue<T>, format: (T) -> String): Field =
-        when (value.status) {
-            CarValue.STATUS_SUCCESS -> value.value?.let { Field.ok(label, format(it), source) }
-                ?: Field.unavailable(label, source, "CarValue STATUS_SUCCESS without a value")
-            CarValue.STATUS_UNAVAILABLE -> Field.unavailable(label, source, "CarValue STATUS_UNAVAILABLE")
-            CarValue.STATUS_UNIMPLEMENTED ->
-                Field.notSupported(label, source, "CarValue STATUS_UNIMPLEMENTED: not implemented by the car or host")
-            else -> Field.unavailable(label, source, "CarValue STATUS_UNKNOWN (${value.status})")
-        }
+        CarValues.success(value)?.let { Field.ok(label, format(it), source) }
+            ?: CarValues.noValue(value.status).field(label, source)
 
     fun model(model: Model): List<Field> {
         val s = HardwareFeature.MODEL.source

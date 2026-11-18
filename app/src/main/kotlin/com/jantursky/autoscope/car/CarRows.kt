@@ -1,8 +1,8 @@
 package com.jantursky.autoscope.car
 
 import com.jantursky.autoscope.core.Field
+import com.jantursky.autoscope.core.Status
 import com.jantursky.autoscope.core.paginate
-import com.jantursky.autoscope.core.rowText
 import com.jantursky.autoscope.core.rowTitle
 
 /** What a row does when tapped. Rows without an action are plain readings. */
@@ -24,6 +24,12 @@ data class Page(val rows: List<UiRow>, val index: Int, val count: Int)
 object CarRows {
     const val MAX_LINE = 60
     const val MAX_LINES = 2
+
+    /**
+     * Line length for the content pane of a map screen, which is narrower than a list: the DHU cut a pane
+     * line after about 25 characters, so wrapping earlier keeps both lines readable.
+     */
+    const val MAP_PANE_LINE = 28
 
     /**
      * Wraps [text] at spaces into at most [maxLines] lines of [maxLine] characters; the rest is cut with
@@ -50,11 +56,36 @@ object CarRows {
         return lines.ifEmpty { listOf("-") }
     }
 
-    fun fieldRow(field: Field) = UiRow(field.rowTitle(), splitText(field.rowText()))
+    fun fieldRow(field: Field, maxLine: Int = MAX_LINE) = UiRow(field.rowTitle(), splitText(fieldText(field), maxLine))
+
+    /**
+     * Second line of a car row: "value (OK)", or why there is no value with the most telling words first,
+     * as the host cuts what does not fit. A short status word leads unless the reason already says the
+     * value is missing ("No…", "Not…", "Missing…"); package prefixes of permission names are dropped.
+     */
+    fun fieldText(field: Field): String {
+        if (field.status == Status.OK) return "${field.value ?: "-"} (OK)"
+        val word = statusWord(field.status)
+        val reason = field.reason?.let(::shortPermissions) ?: return word
+        return if (SAYS_MISSING.containsMatchIn(reason)) reason else "$word: $reason"
+    }
+
+    fun statusWord(status: Status): String = when (status) {
+        Status.OK -> "OK"
+        Status.UNAVAILABLE -> "No value"
+        Status.PERMISSION_MISSING -> "Not granted"
+        Status.NOT_SUPPORTED_BY_HOST -> "Not supported"
+    }
+
+    /** "com.google.android.gms.permission.CAR_SPEED" becomes "CAR_SPEED". */
+    fun shortPermissions(text: String): String = PERMISSION_NAME.replace(text) { it.groupValues[1] }
+
+    private val SAYS_MISSING = Regex("^(No|Not|Missing)\\b")
+    private val PERMISSION_NAME = Regex("\\b(?:[a-z][a-z0-9_]*\\.)+([A-Z][A-Z0-9_]+)\\b")
 
     /** Log rows get stable titles (#1 is the newest) so new entries refresh the page instead of adding a step. */
     fun logRows(entries: List<Field>): List<UiRow> = entries.mapIndexed { i, f ->
-        UiRow("#${i + 1}", splitText("${f.label} ${f.value ?: f.rowText()}"))
+        UiRow("#${i + 1}", splitText("${f.label} ${f.value ?: fieldText(f)}"))
     }
 
     /**

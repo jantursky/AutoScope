@@ -15,17 +15,23 @@ class TabModelTest {
 
     @Test fun groupTabsComeFirstInGroupOrderThenFixedPages() {
         val tabs = tabModels(groups(Group.PHONE to listOf(ok), Group.HOST to listOf(ok)))
-        assertEquals(listOf("Host and library", "Phone", "Changes", "Reports", "Help"), tabs.map { it.title })
+        assertEquals(listOf("Car", "Host and library", "Phone", "Changes", "Reports", "Help"), tabs.map { it.title })
     }
 
     @Test fun withoutDataOnlyFixedPagesExist() {
-        assertEquals(listOf("Changes", "Reports", "Help"), tabModels(emptyList()).map { it.title })
+        assertEquals(listOf("Car", "Changes", "Reports", "Help"), tabModels(emptyList()).map { it.title })
     }
 
     @Test fun badgeCountsProblemsButNotWaitingForCar() {
         val tabs = tabModels(groups(Group.HARDWARE to listOf(ok, broken, waiting, broken)))
-        assertEquals(2, tabs.first().badge)
+        assertEquals(0, tabs.first().badge)
+        assertEquals(2, tabs[1].badge)
         assertEquals(0, tabs.last().badge)
+    }
+
+    @Test fun carTabIsFirstAndExistsWithoutData() {
+        assertEquals(TabId.Car, tabModels(emptyList()).first().id)
+        assertEquals("car", resolveTab(tabModels(emptyList()), "car").id.key)
     }
 
     @Test fun resolvesStoredTab() {
@@ -36,8 +42,8 @@ class TabModelTest {
 
     @Test fun fallsBackToFirstTabWhenGroupDisappearsOrKeyIsUnknown() {
         val tabs = tabModels(groups(Group.HOST to listOf(ok)))
-        assertEquals(TabId.OfGroup(Group.HOST), resolveTab(tabs, "group:TOUCH").id)
-        assertEquals(TabId.OfGroup(Group.HOST), resolveTab(tabs, null).id)
-        assertEquals(TabId.Changes, resolveTab(tabModels(emptyList()), "group:HOST").id)
+        assertEquals(TabId.Car, resolveTab(tabs, "group:TOUCH").id)
+        assertEquals(TabId.Car, resolveTab(tabs, null).id)
+        assertEquals(TabId.Car, resolveTab(tabModels(emptyList()), "group:HOST").id)
     }
 }

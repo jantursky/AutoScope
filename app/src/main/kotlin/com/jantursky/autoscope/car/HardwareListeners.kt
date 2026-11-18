@@ -16,12 +16,18 @@ import androidx.car.app.hardware.info.Gyroscope
 import androidx.car.app.hardware.info.Mileage
 import androidx.car.app.hardware.info.Speed
 import androidx.car.app.hardware.info.TollCard
+import com.jantursky.autoscope.CarTelemetry
 import com.jantursky.autoscope.core.EventLog
+import com.jantursky.autoscope.core.Status
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.updateAndGet
 
 /**
  * Registers the CarHardwareManager listeners of one Session and removes them again. The
  * CarHardwareManager on Android Auto comes from the app-projected artifact (CarAppMetadataHolderService
- * meta-data). Must be used on the main thread, as CarInfo and CarSensors are @MainThread.
+ * meta-data). Must be used on the main thread, as CarInfo and CarSensors are @MainThread. Every result goes
+ * to the fields ([HardwareState]) and to the typed [telemetry].
  */
 class HardwareListeners(
     private val carContext: CarContext,
@@ -29,6 +35,7 @@ class HardwareListeners(
     private val permissions: PermissionPort,
     private val state: HardwareState,
     private val samples: SensorSamples,
+    private val telemetry: MutableStateFlow<CarTelemetry>,
     private val eventLog: EventLog,
 ) {
     private val removals = mutableListOf<() -> Unit>()
@@ -36,19 +43,20 @@ class HardwareListeners(
     /** Registers every item the API level and the granted permissions allow. Safe to call again. */
     fun start() {
         stop()
-        val allowed = HardwareFeature.entries.filter { HardwareSource.mayRegister(it, apiLevel, permissions) }
+        telemetry.value = TelemetryMapping.initial(apiLevel, permissions)
+        val allowed = HardwareFeature.entries.filter { HardwareGate.block(it, apiLevel, permissions) == null }
         if (allowed.isEmpty()) return
         val manager = try {
             carContext.getCarService(CarHardwareManager::class.java)
         } catch (e: Exception) {
-            allowed.forEach { state.fail(it, "CarHardwareManager: ${e::class.simpleName}: ${e.message}") }
+            allowed.forEach { fail(it, "CarHardwareManager: ${e::class.simpleName}: ${e.message}") }
             return
         }
         allowed.forEach { feature ->
             try {
                 register(feature, manager.carInfo, manager.carSensors)
             } catch (e: Exception) {
-                state.fail(feature, "${e::class.simpleName}: ${e.message}")
+                fail(feature, "${e::class.simpleName}: ${e.message}")
             }
         }
         eventLog.add("Hardware listeners registered: ${allowed.joinToString { it.name }}")
@@ -65,13 +73,16 @@ class HardwareListeners(
         val rate = CarSensors.UPDATE_RATE_NORMAL
         when (feature) {
             HardwareFeature.MODEL ->
-                info.fetchModel(executor) { state.store(feature, HardwareFields.model(it)) }
+                info.fetchModel(executor) {
+                    state.store(feature, HardwareFields.model(it))
+                    telemetry.update { t -> TelemetryMapping.withModel(t, it) }
+                }
             HardwareFeature.ENERGY_PROFILE ->
                 info.fetchEnergyProfile(executor) { state.store(feature, HardwareFields.energyProfile(it)) }
             HardwareFeature.SPEED -> {
                 val l = OnCarDataAvailableListener<Speed> {
                     state.store(feature, HardwareFields.speed(it))
-                    samples.speed(it.rawSpeedMetersPerSecond)
+                    samples.speed(telemetry.updateAndGet { t -> TelemetryMapping.withSpeed(t, it) }.speedMetersPerSecond)
                 }
                 info.addSpeedListener(executor, l)
                 removals += { info.removeSpeedListener(l) }
@@ -82,7 +93,10 @@ class HardwareListeners(
                 removals += { info.removeMileageListener(l) }
             }
             HardwareFeature.ENERGY_LEVEL -> {
-                val l = OnCarDataAvailableListener<EnergyLevel> { state.store(feature, HardwareFields.energyLevel(it)) }
+                val l = OnCarDataAvailableListener<EnergyLevel> {
+                    state.store(feature, HardwareFields.energyLevel(it))
+                    telemetry.update { t -> TelemetryMapping.withEnergyLevel(t, it) }
+                }
                 info.addEnergyLevelListener(executor, l)
                 removals += { info.removeEnergyLevelListener(l) }
             }
@@ -95,7 +109,7 @@ class HardwareListeners(
             HardwareFeature.ACCELEROMETER -> {
                 val l = OnCarDataAvailableListener<Accelerometer> {
                     state.store(feature, HardwareFields.accelerometer(it))
-                    samples.accelerometer(it.forces)
+                    telemetry.update { t -> TelemetryMapping.withAccelerometer(t, it) }
                 }
                 sensors.addAccelerometerListener(rate, executor, l)
                 removals += { sensors.removeAccelerometerListener(l) }
@@ -108,7 +122,7 @@ class HardwareListeners(
             HardwareFeature.COMPASS -> {
                 val l = OnCarDataAvailableListener<Compass> {
                     state.store(feature, HardwareFields.compass(it))
-                    samples.compass(it.orientations)
+                    telemetry.update { t -> TelemetryMapping.withCompass(t, it) }
                 }
                 sensors.addCompassListener(rate, executor, l)
                 removals += { sensors.removeCompassListener(l) }
@@ -123,8 +137,16 @@ class HardwareListeners(
 
     @OptIn(markerClass = [ExperimentalCarApi::class])
     private fun registerEvStatus(info: CarInfo, feature: HardwareFeature) {
-        val l = OnCarDataAvailableListener<EvStatus> { state.store(feature, HardwareFields.evStatus(it)) }
+        val l = OnCarDataAvailableListener<EvStatus> {
+            state.store(feature, HardwareFields.evStatus(it))
+            telemetry.update { t -> TelemetryMapping.withEvStatus(t, it) }
+        }
         info.addEvStatusListener(carContext.mainExecutor, l)
         removals += { info.removeEvStatusListener(l) }
+    }
+
+    private fun fail(feature: HardwareFeature, reason: String) {
+        state.fail(feature, reason)
+        telemetry.update { TelemetryMapping.withMissing(it, feature, NoValue(Status.UNAVAILABLE, reason)) }
     }
 }

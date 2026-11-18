@@ -69,7 +69,7 @@ class ViewFieldsTest {
         assertEquals(listOf("Grant permissions", "Car speed", "Location"), rows.map { it.title })
         assertEquals(RowAction.GrantPermissions, rows[0].action)
         assertEquals("Missing: ACCESS_FINE_LOCATION", rows[0].lines.single())
-        assertTrue(rows[2].lines.single().startsWith("PERMISSION_MISSING"))
+        assertEquals("Not granted: Tap Grant permissions", rows[2].lines.single())
     }
 
     @Test

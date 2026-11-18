@@ -1,7 +1,6 @@
 package com.jantursky.autoscope.car
 
 import android.graphics.Canvas
-import android.graphics.Color
 import android.graphics.Paint
 import java.util.Locale
 
@@ -20,19 +19,18 @@ class TouchRenderer(
 
     fun render(canvas: Canvas, dpi: Int) {
         val stats = recorder.stats()
-        val dark = darkMode()
-        val foreground = if (dark) Color.WHITE else Color.BLACK
-        canvas.drawColor(if (dark) Color.BLACK else Color.WHITE)
+        val palette = SurfacePalette.of(darkMode())
+        canvas.drawColor(palette.background)
         val px = dpi / 160f
         line.strokeWidth = 3 * px
 
-        line.color = Color.GRAY
+        line.color = palette.dim
         stats.trail.zipWithNext { a, b -> canvas.drawLine(a.x, a.y, b.x, b.y, line) }
-        dot.color = Color.GRAY
+        dot.color = palette.dim
         stats.trail.forEach { canvas.drawCircle(it.x, it.y, 6 * px, dot) }
 
         stats.last?.let {
-            line.color = Color.RED
+            line.color = palette.accent
             val arm = 24 * px
             canvas.drawLine(it.x - arm, it.y, it.x + arm, it.y, line)
             canvas.drawLine(it.x, it.y - arm, it.x, it.y + arm, line)
@@ -43,7 +41,7 @@ class TouchRenderer(
         val area = visibleArea()?.takeUnless { it.isEmpty }
         val left = (area?.left ?: 0) + 16 * px
         val top = (area?.top ?: 0) + 40 * px
-        text.color = foreground
+        text.color = palette.foreground
         text.textSize = 24 * px
         val lines = listOf(
             TouchKind.entries.joinToString("  ") { "${it.name.lowercase()} ${stats.counts.getValue(it)}" },

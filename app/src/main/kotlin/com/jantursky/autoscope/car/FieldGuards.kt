@@ -4,6 +4,7 @@ import com.jantursky.autoscope.core.Field
 import com.jantursky.autoscope.core.Status
 
 internal const val NO_SESSION = "No car session"
+internal const val NO_VALUE_YET = "No value from the car yet"
 
 /** Runs [read] and turns any exception into a field status, so one failing call never hides the others. */
 internal inline fun guarded(label: String, source: String, read: () -> Field): Field =

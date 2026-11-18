@@ -16,13 +16,15 @@ data class Box(val left: Float, val top: Float, val right: Float, val bottom: Fl
 
 data class Circle(val cx: Float, val cy: Float, val radius: Float)
 
+data class Dashboard(val car: Box, val gauges: List<Box>)
+
+data class CarTileLayout(val figure: Box, val bar: Box, val firstLineTop: Float)
+
 /**
  * Geometry of the Visual screen's gauges, free of android.graphics so it can be tested on the JVM. Screen
  * coordinates: x grows to the right, y grows downwards.
  */
 object Gauges {
-    const val STANDARD_GRAVITY = 9.81f
-
     /** The speed arc starts at the lower left (canvas degrees, clockwise from 3 o'clock) and spans 270°. */
     const val SPEED_START_DEGREES = 135f
     const val SPEED_SWEEP_DEGREES = 270f
@@ -30,6 +32,48 @@ object Gauges {
 
     /** The sparkline scale never drops below this, so standing still draws a flat line at the bottom. */
     const val SPARKLINE_MIN_SCALE_KMH = 10f
+
+    /**
+     * The Visual layout inside [area]: the car tile and four gauge tiles, with [gap] between and around
+     * them. Landscape: the car is a full height column on the left and the gauges a 2 x 2 grid in the other
+     * two columns. Portrait: the car is the top half and the grid the bottom half.
+     */
+    fun dashboard(area: Box, gap: Float): Dashboard =
+        if (area.width >= area.height) {
+            val column = ((area.width - 4 * gap) / 3).coerceAtLeast(0f)
+            val carRight = area.left + gap + column
+            Dashboard(
+                car = Box(area.left + gap, area.top + gap, carRight, (area.bottom - gap).coerceAtLeast(area.top + gap)),
+                gauges = grid(Box(carRight, area.top, area.right, area.bottom), gap),
+            )
+        } else {
+            val row = ((area.height - 3 * gap) / 2).coerceAtLeast(0f)
+            val carBottom = area.top + gap + row
+            Dashboard(
+                car = Box(area.left + gap, area.top + gap, (area.right - gap).coerceAtLeast(area.left + gap), carBottom),
+                gauges = grid(Box(area.left, carBottom, area.right, area.bottom), gap),
+            )
+        }
+
+    /**
+     * Inside the car [tile]: below a [header], the text [lines] of [lineHeight] at the bottom, the energy bar
+     * of [barWidth] on the right and the car figure in the rest, all [padding] apart.
+     */
+    fun carTile(tile: Box, header: Float, padding: Float, lineHeight: Float, lines: Int, barWidth: Float): CarTileLayout {
+        val top = tile.top + header
+        val firstLineTop = (tile.bottom - padding - lines * lineHeight).coerceAtLeast(top)
+        val bottom = (firstLineTop - padding).coerceAtLeast(top)
+        val barLeft = (tile.right - padding - barWidth).coerceAtLeast(tile.left)
+        return CarTileLayout(
+            figure = Box(tile.left + padding, top, (barLeft - padding).coerceAtLeast(tile.left + padding), bottom),
+            bar = Box(barLeft, top, (tile.right - padding).coerceAtLeast(barLeft), bottom),
+            firstLineTop = firstLineTop,
+        )
+    }
+
+    /** The filled part of a vertical [bar] at [fraction] (clamped to 0..1), growing from the bottom. */
+    fun fillFromBottom(bar: Box, fraction: Float): Box =
+        bar.copy(top = bar.bottom - bar.height * fraction.coerceIn(0f, 1f))
 
     /** Four equal tiles inside [area], row by row, with [gap] between them and around them. */
     fun grid(area: Box, gap: Float): List<Box> {
@@ -62,10 +106,10 @@ object Gauges {
     }
 
     /**
-     * Position of the g-force dot: x to the right, y upwards, the dial edge at [fullScale] m/s² (1 g by
-     * default). Larger forces stay on the edge in their direction.
+     * Position of the g-force dot: x to the right, y upwards, the dial edge at [fullScale] g. Larger forces
+     * stay on the edge in their direction.
      */
-    fun bubble(dial: Circle, force: Force, fullScale: Float = STANDARD_GRAVITY): Point {
+    fun bubble(dial: Circle, force: Force, fullScale: Float = 1f): Point {
         var dx = force.x / fullScale * dial.radius
         var dy = -force.y / fullScale * dial.radius
         val length = hypot(dx, dy)

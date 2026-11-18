@@ -1,8 +1,10 @@
 package com.jantursky.autoscope.car
 
+import androidx.car.app.hardware.common.CarValue
 import com.jantursky.autoscope.core.Field
 import com.jantursky.autoscope.core.Group
 import com.jantursky.autoscope.core.Snapshot
+import com.jantursky.autoscope.core.Status
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertTrue
@@ -125,5 +127,51 @@ class CarRowsTest {
 
         assertEquals(CarView.HARDWARE.visible(before), CarView.HARDWARE.visible(otherGroup))
         assertNotEquals(CarView.HARDWARE.visible(before), CarView.HARDWARE.visible(ownGroup))
+    }
+
+    @Test
+    fun `row text leads with what is missing and drops package prefixes`() {
+        assertEquals("42 (OK)", CarRows.fieldText(Field.ok("Speed", 42, "t")))
+        assertEquals(
+            "Not implemented by this car/host",
+            CarRows.fieldText(CarValues.noValue(CarValue.STATUS_UNIMPLEMENTED).field("Compass", "t")),
+        )
+        assertEquals("No value yet", CarRows.fieldText(CarValues.noValue(CarValue.STATUS_UNAVAILABLE).field("Compass", "t")))
+        assertEquals(
+            "Missing permission: CAR_SPEED",
+            CarRows.fieldText(Field.permissionMissing("Raw speed", "t", CarPermissions.CAR_SPEED)),
+        )
+        assertEquals(
+            "Not granted: SecurityException: needs ACCESS_FINE_LOCATION",
+            CarRows.fieldText(Field("Location", null, "t", Status.PERMISSION_MISSING, "SecurityException: needs android.permission.ACCESS_FINE_LOCATION")),
+        )
+        assertEquals(
+            "Not supported: onClick needs Car App API 5, host has 4",
+            CarRows.fieldText(Field.notSupported("Clicks", "t", needsLevel("onClick", 5, 4))),
+        )
+        assertEquals("No value", CarRows.fieldText(Field("X", null, "t", Status.UNAVAILABLE)))
+    }
+
+    @Test
+    fun `hardware, sensor and permission rows fit two lines without losing their start`() {
+        val ports = fakePorts(apiLevel = 8, permissions = FakePermissions(mutableSetOf()))
+        val hardware = HardwareSource({ ports }, HardwareState()).read() +
+            HardwareSource({ fakePorts(apiLevel = 2) }, HardwareState()).read()
+        val permissions = Field(
+            "Car speed", null, "t", Status.PERMISSION_MISSING,
+            "Tap Grant permissions on the Hardware tab in the car, or grant it in phone Settings",
+        )
+        (hardware + permissions).forEach { field ->
+            val lines = CarRows.fieldRow(field).lines
+            assertTrue("${field.label}: $lines", lines.size <= CarRows.MAX_LINES && lines.all { it.length <= CarRows.MAX_LINE })
+            assertTrue("${field.label}: $lines", lines.none { it.endsWith("…") })
+            assertTrue(lines.first().startsWith("No") || lines.first().startsWith("Not") || lines.first().startsWith("Missing"))
+        }
+    }
+
+    @Test
+    fun `map pane rows wrap earlier and keep the reason readable`() {
+        val row = CarRows.fieldRow(CarValues.noValue(CarValue.STATUS_UNIMPLEMENTED).field("Compass", "t"), CarRows.MAP_PANE_LINE)
+        assertEquals(listOf("Not implemented by this", "car/host"), row.lines)
     }
 }

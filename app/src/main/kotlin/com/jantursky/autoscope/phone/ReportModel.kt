@@ -14,9 +14,11 @@ internal const val NO_CAR_SESSION = "No car session"
 /** Lifecycle log entries shown on the phone; the log itself keeps more. */
 internal const val LIFECYCLE_ROW_LIMIT = 30
 
-fun statusStyle(field: Field): StatusStyle = when (field.status) {
+fun statusStyle(field: Field): StatusStyle = statusStyle(field.status, field.reason)
+
+fun statusStyle(status: Status, reason: String?): StatusStyle = when (status) {
     Status.OK -> StatusStyle.NONE
-    Status.UNAVAILABLE -> if (field.reason == NO_CAR_SESSION) StatusStyle.CALM else StatusStyle.MUTED
+    Status.UNAVAILABLE -> if (reason == NO_CAR_SESSION) StatusStyle.CALM else StatusStyle.MUTED
     Status.PERMISSION_MISSING -> StatusStyle.WARNING
     Status.NOT_SUPPORTED_BY_HOST -> StatusStyle.INFO
 }

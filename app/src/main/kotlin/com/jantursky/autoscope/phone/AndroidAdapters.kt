@@ -47,8 +47,9 @@ internal class AndroidBatteryAdapter(private val context: Context) : BatteryAdap
 internal class AndroidPowerAdapter(context: Context) : PowerAdapter {
     private val power = context.getSystemService(PowerManager::class.java)
 
-    // PowerSource only calls this on API 29+.
-    override fun thermalStatus(): Int? = power?.currentThermalStatus
+    // PowerSource only calls this on API 29+; the check also satisfies lint.
+    override fun thermalStatus(): Int? =
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) power?.currentThermalStatus else null
 
     override fun isPowerSaveMode(): Boolean? = power?.isPowerSaveMode
 }

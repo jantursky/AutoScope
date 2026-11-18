@@ -2,7 +2,11 @@ package com.jantursky.autoscope.car
 
 import android.os.SystemClock
 import com.jantursky.autoscope.core.EventLog
+import com.jantursky.autoscope.CarTelemetry
 import com.jantursky.autoscope.core.FieldSource
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 
 /**
  * The car side sources. They exist from process start and report UNAVAILABLE ("No car session") until a
@@ -22,6 +26,10 @@ class CarSources(
     val performance = PerformanceTracker(clock)
     val hardware = HardwareState()
     val samples = SensorSamples(clock)
+
+    /** Typed latest values for drawing. Filled while a Session is bound; EMPTY otherwise. */
+    internal val telemetryState = MutableStateFlow(CarTelemetry.EMPTY)
+    val telemetry: StateFlow<CarTelemetry> = telemetryState.asStateFlow()
 
     val sources: List<FieldSource> = listOf(
         CarHostSource(::currentPorts),
@@ -56,6 +64,7 @@ class CarSources(
         hardware.clear()
         samples.clear()
         surface.reset()
+        telemetryState.value = CarTelemetry.EMPTY
         eventLog.add("Car sources unbound")
     }
 }

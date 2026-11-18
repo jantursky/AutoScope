@@ -51,8 +51,8 @@ class GaugesTest {
     @Test
     fun `bubble moves right for positive x and up for positive y`() {
         assertPoint(100f, 100f, Gauges.bubble(dial, Force(0f, 0f)))
-        assertPoint(125f, 100f, Gauges.bubble(dial, Force(Gauges.STANDARD_GRAVITY / 2, 0f)))
-        assertPoint(100f, 75f, Gauges.bubble(dial, Force(0f, Gauges.STANDARD_GRAVITY / 2)))
+        assertPoint(125f, 100f, Gauges.bubble(dial, Force(0.5f, 0f)))
+        assertPoint(100f, 75f, Gauges.bubble(dial, Force(0f, 0.5f)))
     }
 
     @Test
@@ -91,5 +91,48 @@ class GaugesTest {
         assertEquals(1, points.size)
         assertEquals(100f - 100f / Gauges.SPARKLINE_MIN_SCALE_KMH, points.single().y, eps)
         assertTrue(Gauges.sparkline(emptyList(), 0, 60_000, Box(0f, 0f, 1f, 1f)).isEmpty())
+    }
+
+    @Test
+    fun `landscape dashboard puts the car column left of the gauge grid`() {
+        val d = Gauges.dashboard(Box(0f, 0f, 340f, 230f), gap = 10f)
+
+        assertEquals(Box(10f, 10f, 110f, 220f), d.car)
+        assertEquals(Box(120f, 10f, 220f, 110f), d.gauges[0])
+        assertEquals(Box(230f, 120f, 330f, 220f), d.gauges[3])
+    }
+
+    @Test
+    fun `portrait dashboard puts the car on top of the gauge grid`() {
+        val d = Gauges.dashboard(Box(0f, 0f, 230f, 430f), gap = 10f)
+
+        assertEquals(Box(10f, 10f, 220f, 210f), d.car)
+        assertEquals(Box(10f, 220f, 110f, 315f), d.gauges[0])
+        assertEquals(4, d.gauges.size)
+    }
+
+    @Test
+    fun `car tile keeps the lines at the bottom and the bar on the right`() {
+        val layout = Gauges.carTile(Box(0f, 0f, 200f, 300f), header = 40f, padding = 10f, lineHeight = 20f, lines = 3, barWidth = 10f)
+
+        assertEquals(230f, layout.firstLineTop)
+        assertEquals(Box(180f, 40f, 190f, 220f), layout.bar)
+        assertEquals(Box(10f, 40f, 170f, 220f), layout.figure)
+    }
+
+    @Test
+    fun `car tile never inverts its boxes when too many lines are asked for`() {
+        val layout = Gauges.carTile(Box(0f, 0f, 20f, 50f), header = 40f, padding = 10f, lineHeight = 20f, lines = 5, barWidth = 10f)
+
+        assertTrue(layout.figure.height >= 0f && layout.figure.width >= 0f)
+        assertTrue(layout.bar.height >= 0f && layout.bar.width >= 0f)
+    }
+
+    @Test
+    fun `energy bar fills from the bottom and clamps the fraction`() {
+        val bar = Box(0f, 0f, 10f, 100f)
+        assertEquals(Box(0f, 75f, 10f, 100f), Gauges.fillFromBottom(bar, 0.25f))
+        assertEquals(bar, Gauges.fillFromBottom(bar, 2f))
+        assertEquals(0f, Gauges.fillFromBottom(bar, -1f).height, eps)
     }
 }

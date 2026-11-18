@@ -10,6 +10,10 @@ sealed interface TabId {
         override val key = "group:${group.name}"
     }
 
+    object Car : TabId {
+        override val key = "car"
+    }
+
     object Changes : TabId {
         override val key = "changes"
     }
@@ -26,9 +30,9 @@ sealed interface TabId {
 /** One chip: [badge] counts the fields that are a problem, 0 shows no badge. */
 data class TabModel(val id: TabId, val title: String, val badge: Int)
 
-/** One tab per group that has fields, in group order, then the fixed pages. */
+/** The Car tab, one tab per group that has fields in group order, then the fixed pages. The car page needs no data to exist. */
 fun tabModels(groups: List<GroupModel>): List<TabModel> =
-    groups.map { TabModel(TabId.OfGroup(it.group), it.group.title, it.issues) } + listOf(
+    listOf(TabModel(TabId.Car, "Car", 0)) + groups.map { TabModel(TabId.OfGroup(it.group), it.group.title, it.issues) } + listOf(
         TabModel(TabId.Changes, "Changes", 0),
         TabModel(TabId.Reports, "Reports", 0),
         TabModel(TabId.Help, "Help", 0),
