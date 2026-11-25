@@ -20,7 +20,7 @@ Tested in a real car: a Mazda CX-5 (2017) over USB, Android Auto 18.0.664264, Ca
 ## Install
 
 - **Google Play:** [AutoScope on Google Play](https://play.google.com/store/apps/details?id=com.jantursky.autoscope). The public listing is not live yet; for now the app is on an internal testing track. This is the install that works in a real car.
-- **APK:** download `AutoScope-1.1.2.apk` from the [latest release](https://github.com/jantursky/AutoScope/releases/latest) and open it on the phone, or run `adb install AutoScope-1.1.2.apk`. A sideloaded build shows up in a real car as a media app only (see below) and runs the full UI on the DHU. The Play build is signed with a different key, so uninstall one before installing the other.
+- **APK:** download `AutoScope-1.2.0.apk` from the [latest release](https://github.com/jantursky/AutoScope/releases/latest) and open it on the phone, or run `adb install AutoScope-1.2.0.apk`. A sideloaded build shows up in a real car as a media app only (see below) and runs the full UI on the DHU. The Play build is signed with a different key, so uninstall one before installing the other.
 - **F-Droid:** not listed yet. The first request was closed because F-Droid asks for an app that has been maintained for more than 3 months; the store metadata stays in `fastlane/` and `fdroid/` for a later request.
 
 Then follow [Setup](#setup) for developer mode.
@@ -159,6 +159,12 @@ spikes/    Step 0 feasibility spikes: car app (IOT, POI) and media app
 scripts/   dev.sh (one command), DHU setup, spike install
 .github/   CI workflow, logo
 ```
+
+## Releasing
+
+CI (`.github/workflows/ci.yml`) runs build, unit tests, `lintDebug` and a line coverage floor (`jacocoTestCoverageVerification`) on every push and pull request. The floors are in `core/build.gradle.kts` and `app/build.gradle.kts`; the app floor ignores views, car screens and services that need a device.
+
+To release: bump `versionCode` and `versionName` in `app/build.gradle.kts`, add a `## [X.Y.Z]` section to `CHANGELOG.md` and `fastlane/metadata/android/en-US/changelogs/<versionCode>.txt`, commit, then push the tag `vX.Y.Z`. `.github/workflows/release.yml` checks the tag against `versionName`, builds and verifies the signed APK, and creates the GitHub release with that changelog section as notes. It needs the repository secrets `AUTOSCOPE_KEYSTORE_B64` (`base64 -i autoscope.jks`) and `AUTOSCOPE_KEYSTORE_PASSWORD`. The Play Console upload stays manual.
 
 <!-- PROJECTS:START -->
 ## Other Projects & Products

@@ -15,4 +15,13 @@ jobs:
           distribution: temurin
           java-version: 17
       - uses: gradle/actions/setup-gradle@v4
-      - run: ./gradlew assembleDebug testDebugUnitTest :core:test
+      - run: ./gradlew assembleDebug testDebugUnitTest :core:test lintDebug
+      - run: ./gradlew :core:jacocoTestCoverageVerification :app:jacocoTestCoverageVerification
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: reports
+          path: |
+            app/build/reports/lint-results-debug.html
+            app/build/reports/jacoco/
+            core/build/reports/jacoco/

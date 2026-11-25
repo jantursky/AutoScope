@@ -1,0 +1,1 @@
+CI checks lint and test coverage, and a version tag now builds the signed release. No app changes.
